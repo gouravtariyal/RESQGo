@@ -14,7 +14,7 @@ import {
 } from './styles';
 
 /** Time on splash before advancing to onboarding */
-const SPLASH_HOLD_MS = 2500;
+const SPLASH_HOLD_MS = 4000;
 
 /** Intro fade + scale duration */
 const INTRO_DURATION_MS = 1200;
@@ -24,7 +24,7 @@ const LOGO_SCALE_FROM = 0.8;
 const LOGO_SCALE_TO = 1;
 
 const APP_NAME = 'RESQGo';
-const APP_SUBTITLE = 'AI Powered Roadside Assistance';
+const APP_SUBTITLE = '24x7 Emergency Assistance';
 const APP_TAGLINE = 'Fast • Smart • Reliable';
 const APP_VERSION_LABEL = 'Version 1.0.0';
 const APP_CREDIT = 'Made with ❤️ in India';
