@@ -74,19 +74,22 @@ export const ProfileScreen: React.FC = () => {
           navigation.navigate('MainTabs', { screen: 'History' });
           return;
         case 'emergency-contacts':
-          navigation.navigate('EmergencySOS');
+          navigation.navigate('EmergencyContacts');
           return;
         case 'notifications':
-          navigation.navigate('Settings');
-          return;
-        case 'privacy-policy':
-          Alert.alert('Privacy Policy', 'Privacy policy content will be added here.');
+          navigation.navigate('Notifications');
           return;
         case 'help-support':
-          Alert.alert('Help & Support', 'Support chat and FAQs will be added here.');
+          navigation.navigate('Support');
           return;
         case 'about-app':
-          Alert.alert('About RESQGo', 'RESQGo — AI Powered Roadside Assistance.\nVersion 1.0.0');
+          navigation.navigate('About');
+          return;
+        case 'privacy-policy':
+          navigation.navigate('PrivacyPolicy');
+          return;
+        case 'terms':
+          navigation.navigate('Terms');
           return;
         case 'logout':
           handleLogout();

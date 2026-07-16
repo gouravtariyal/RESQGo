@@ -17,9 +17,10 @@ export type ProfileMenuActionId =
   | 'service-history'
   | 'emergency-contacts'
   | 'notifications'
-  | 'privacy-policy'
   | 'help-support'
   | 'about-app'
+  | 'privacy-policy'
+  | 'terms'
   | 'logout';
 
 export type ProfileMenuItem = {
@@ -45,9 +46,10 @@ export const PROFILE_MENU_ITEMS: ProfileMenuItem[] = [
   { id: 'service-history', title: 'Service History', icon: '🧾' },
   { id: 'emergency-contacts', title: 'Emergency Contacts', icon: '🚨' },
   { id: 'notifications', title: 'Notifications', icon: '🔔' },
-  { id: 'privacy-policy', title: 'Privacy Policy', icon: '🔒' },
   { id: 'help-support', title: 'Help & Support', icon: '💬' },
-  { id: 'about-app', title: 'About App', icon: 'ℹ️' },
+  { id: 'about-app', title: 'About', icon: 'ℹ️' },
+  { id: 'privacy-policy', title: 'Privacy Policy', icon: '🔒' },
+  { id: 'terms', title: 'Terms & Conditions', icon: '📄' },
   { id: 'logout', title: 'Logout', icon: '🚪', destructive: true },
 ];
 

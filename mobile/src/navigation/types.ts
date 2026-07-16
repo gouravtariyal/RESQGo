@@ -42,6 +42,17 @@ export type AppStackParamList = {
   };
   EditProfile: undefined;
   Settings: undefined;
+  Notifications: undefined;
+  EmergencyContacts: undefined;
+  AddEmergencyContact:
+    | {
+        contactId?: string;
+      }
+    | undefined;
+  Support: undefined;
+  About: undefined;
+  PrivacyPolicy: undefined;
+  Terms: undefined;
 };
 
 export type RootStackParamList = {
