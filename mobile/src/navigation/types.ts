@@ -25,7 +25,7 @@ export type BottomTabParamList = {
 
 /**
  * Authenticated app stack.
- * MainTabs hosts the bottom tab navigator; vehicle create/edit lives above the tabs.
+ * MainTabs hosts the bottom tab navigator; stacked screens open above the tabs.
  */
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<BottomTabParamList> | undefined;
@@ -34,6 +34,9 @@ export type AppStackParamList = {
         vehicleId?: string;
       }
     | undefined;
+  NearbyServices: undefined;
+  EmergencySOS: undefined;
+  AIAssistant: undefined;
 };
 
 export type RootStackParamList = {

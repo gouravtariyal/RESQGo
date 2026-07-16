@@ -1,6 +1,9 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { AssistantScreen } from '../features/assistant';
+import { ServicesScreen } from '../features/services';
+import { SOSScreen } from '../features/sos';
 import { AddVehicleScreen } from '../features/vehicles';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import type { AppStackParamList } from './types';
@@ -11,7 +14,7 @@ import type { AppStackParamList } from './types';
  * Owns the authenticated application shell.
  *
  * After OTP verification, users land here and see the Bottom Tab Navigator.
- * AddVehicle is stacked above the tabs so create/edit can use the full screen.
+ * Stack screens (vehicles, services, SOS, AI assistant) open above the tabs.
  */
 export type { AppStackParamList };
 
@@ -29,6 +32,27 @@ export const AppNavigator: React.FC = () => {
       <Stack.Screen
         name="AddVehicle"
         component={AddVehicleScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="NearbyServices"
+        component={ServicesScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="EmergencySOS"
+        component={SOSScreen}
+        options={{
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="AIAssistant"
+        component={AssistantScreen}
         options={{
           animation: 'slide_from_right',
         }}

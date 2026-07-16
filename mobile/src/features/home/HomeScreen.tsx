@@ -1,8 +1,13 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { FlatList, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { AppStackParamList, BottomTabParamList } from '../../navigation/types';
 import {
   HERO_GRADIENT_COLORS,
   HERO_GRADIENT_END,
@@ -18,6 +23,11 @@ type QuickAction = {
   title: string;
   icon: string;
 };
+
+type HomeNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<BottomTabParamList, 'Home'>,
+  NativeStackNavigationProp<AppStackParamList>
+>;
 
 const QUICK_ACTIONS: QuickAction[] = [
   { id: 'emergency-sos', title: 'Emergency SOS', icon: '🚨' },
@@ -35,18 +45,30 @@ const QUICK_ACTIONS: QuickAction[] = [
  * It presents the most common help paths and recent account context in one place.
  */
 export const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<HomeNavigationProp>();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(width), [width]);
 
   // These handlers are placeholders for future feature navigation wiring.
   const handleGetHelp = useCallback(() => {
-    // Intentionally ready for AI assistant or help flow navigation.
-  }, []);
+    navigation.navigate('AIAssistant');
+  }, [navigation]);
 
-  const handleQuickActionPress = useCallback((actionId: string) => {
-    void actionId;
-    // Intentionally ready for future quick-action navigation.
-  }, []);
+  const handleOpenNearbyServices = useCallback(() => {
+    navigation.navigate('NearbyServices');
+  }, [navigation]);
+
+  const handleQuickActionPress = useCallback(
+    (actionId: string) => {
+      if (actionId === 'emergency-sos') {
+        navigation.navigate('EmergencySOS');
+        return;
+      }
+
+      navigation.navigate('NearbyServices');
+    },
+    [navigation],
+  );
 
   const renderQuickAction = useCallback(
     ({ item }: { item: QuickAction }) => (
@@ -146,24 +168,29 @@ export const HomeScreen: React.FC = () => {
         {/* Nearby services card shows the closest trusted service option. */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Nearby Services</Text>
-          <SurfaceCard>
-            <View style={styles.serviceHeader}>
-              <View style={styles.serviceNameWrap}>
-                <Text style={styles.serviceName}>Sharma Auto Care</Text>
-                <Text style={styles.serviceMeta}>Nearest mechanic near your location</Text>
+          <Pressable
+            onPress={handleOpenNearbyServices}
+            accessibilityRole="button"
+            accessibilityLabel="Open nearby services">
+            <SurfaceCard>
+              <View style={styles.serviceHeader}>
+                <View style={styles.serviceNameWrap}>
+                  <Text style={styles.serviceName}>Sharma Auto Care</Text>
+                  <Text style={styles.serviceMeta}>Nearest mechanic near your location</Text>
+                </View>
+
+                <View style={styles.serviceStatusWrap}>
+                  <Text style={styles.serviceStatusText}>Open</Text>
+                </View>
               </View>
 
-              <View style={styles.serviceStatusWrap}>
-                <Text style={styles.serviceStatusText}>Open</Text>
+              <View style={styles.serviceStatsRow}>
+                <StatBlock label="Distance" value="1.8 km" />
+                <StatBlock label="Rating" value="4.8 / 5" />
+                <StatBlock label="Status" value="Open Now" />
               </View>
-            </View>
-
-            <View style={styles.serviceStatsRow}>
-              <StatBlock label="Distance" value="1.8 km" />
-              <StatBlock label="Rating" value="4.8 / 5" />
-              <StatBlock label="Status" value="Open Now" />
-            </View>
-          </SurfaceCard>
+            </SurfaceCard>
+          </Pressable>
         </View>
 
         {/* Recent activity gives users quick confidence about their last request. */}
@@ -185,6 +212,7 @@ export const HomeScreen: React.FC = () => {
       </View>
     ),
     [
+      handleOpenNearbyServices,
       styles.activityLabel,
       styles.activityStatusText,
       styles.activityStatusWrap,
