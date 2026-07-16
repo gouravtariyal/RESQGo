@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { LoginScreen } from '../features/auth';
+import { LoginScreen, OtpScreen } from '../features/auth';
 import { OnboardingScreen } from '../features/onboarding';
 import type { AuthStackParamList } from './types';
 
@@ -27,6 +27,7 @@ export const AuthNavigator: React.FC = () => {
       }}>
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="OTP" component={OtpScreen} />
     </Stack.Navigator>
   );
 };
