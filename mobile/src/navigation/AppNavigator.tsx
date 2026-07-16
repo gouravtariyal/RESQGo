@@ -1,7 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { HomeScreen } from '../features/home';
+import { AddVehicleScreen } from '../features/vehicles';
+import { BottomTabNavigator } from './BottomTabNavigator';
 import type { AppStackParamList } from './types';
 
 /**
@@ -9,8 +10,8 @@ import type { AppStackParamList } from './types';
  * ------------
  * Owns the authenticated application shell.
  *
- * Currently mounts Home. Extend this stack (or nest tab/drawer navigators here)
- * for Provider, AI, Booking, Tracking, Profile, and other product modules.
+ * After OTP verification, users land here and see the Bottom Tab Navigator.
+ * AddVehicle is stacked above the tabs so create/edit can use the full screen.
  */
 export type { AppStackParamList };
 
@@ -19,12 +20,19 @@ const Stack = createNativeStackNavigator<AppStackParamList>();
 export const AppNavigator: React.FC = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Home"
+      initialRouteName="MainTabs"
       screenOptions={{
         headerShown: false,
         animation: 'fade',
       }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+      <Stack.Screen
+        name="AddVehicle"
+        component={AddVehicleScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
     </Stack.Navigator>
   );
 };

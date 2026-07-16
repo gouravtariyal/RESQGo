@@ -6,11 +6,13 @@
 
 export { AppNavigator } from './AppNavigator';
 export { AuthNavigator } from './AuthNavigator';
+export { BottomTabNavigator } from './BottomTabNavigator';
 export { RootNavigator } from './RootNavigator';
 
 export type {
   AppStackParamList,
   AuthStackParamList,
+  BottomTabParamList,
   RootStackParamList,
 } from './types';
 

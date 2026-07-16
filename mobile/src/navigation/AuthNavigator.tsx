@@ -8,10 +8,15 @@ import type { AuthStackParamList } from './types';
 /**
  * AuthNavigator
  * ------------
- * Owns the unauthenticated experience: first-run onboarding and login.
+ * Owns the unauthenticated experience: first-run onboarding, login, and OTP.
  *
- * Future auth screens (SignUp, OTP, ForgotPassword) should be registered here.
- * After a successful login, navigate to the root `App` stack (see LoginScreen).
+ * Flow:
+ *   Onboarding → Login → OTP
+ *
+ * After a successful OTP verification, the OTP screen resets the root stack
+ * into the authenticated App navigator (Bottom Tabs → Home).
+ *
+ * Future auth screens (SignUp, ForgotPassword) should be registered here.
  */
 export type { AuthStackParamList };
 

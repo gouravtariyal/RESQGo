@@ -176,11 +176,20 @@ export const OtpScreen: React.FC = () => {
       return;
     }
 
+    // Reset the root stack into the authenticated Bottom Tabs (Home by default).
     navigation
       .getParent<NativeStackNavigationProp<RootStackParamList>>()
       ?.reset({
         index: 0,
-        routes: [{ name: 'App' }],
+        routes: [
+          {
+            name: 'App',
+            params: {
+              screen: 'MainTabs',
+              params: { screen: 'Home' },
+            },
+          },
+        ],
       });
   }, [isOtpValid, navigation]);
 

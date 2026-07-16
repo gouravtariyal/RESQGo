@@ -43,7 +43,8 @@ export const createStyles = (width: number) => {
     listContent: {
       paddingHorizontal: horizontalPadding,
       paddingTop: spacing.lg,
-      paddingBottom: spacing['3xl'],
+      // Extra bottom space so the last cards clear the floating tab bar.
+      paddingBottom: spacing['6xl'] + spacing['3xl'],
     },
 
     // Shared card shell used across dashboard sections.
@@ -278,37 +279,5 @@ export const createStyles = (width: number) => {
       fontWeight: fontWeights.semibold,
     },
 
-    // Bottom navigation placeholder.
-    bottomNav: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: spacing['2xl'],
-      padding: spacing.sm,
-      borderRadius: radius.full,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      ...shadows.sm,
-    },
-    bottomNavItem: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.full,
-      paddingVertical: spacing.md,
-      marginHorizontal: spacing.xxs,
-    },
-    bottomNavItemActive: {
-      backgroundColor: '#EFF6FF',
-    },
-    bottomNavText: {
-      ...typography.caption,
-      color: colors.textSecondary,
-    },
-    bottomNavTextActive: {
-      color: colors.primary,
-      fontWeight: fontWeights.semibold,
-    },
   });
 };

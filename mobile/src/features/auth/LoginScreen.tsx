@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -56,9 +57,16 @@ export const LoginScreen: React.FC = () => {
     setShowValidationState(digitsOnly.length > 0);
   }, []);
 
-  // Continue is enabled only for valid phone numbers, then moves the user to OTP.
+  // Validate the mobile number first, then move the user to OTP verification.
   const handleContinue = useCallback(() => {
+    if (!mobileNumber) {
+      Alert.alert('Please enter your mobile number');
+      setShowValidationState(true);
+      return;
+    }
+
     if (!isPhoneValid) {
+      Alert.alert('Please enter a valid 10-digit mobile number');
       setShowValidationState(true);
       return;
     }
@@ -76,7 +84,7 @@ export const LoginScreen: React.FC = () => {
       return undefined;
     }
 
-    if (mobileNumber.length > 0 && !isPhoneValid) {
+    if (mobileNumber.length > 0 && !isPhoneValid) { 
       return styles.phoneInputWrapError;
     }
 
@@ -170,7 +178,6 @@ export const LoginScreen: React.FC = () => {
                 <View style={styles.actions}>
                   <Pressable
                     onPress={handleContinue}
-                    disabled={!isPhoneValid}
                     accessibilityRole="button"
                     accessibilityLabel="Continue"
                     style={[
@@ -185,7 +192,6 @@ export const LoginScreen: React.FC = () => {
                       <Text style={styles.continueText}>Continue</Text>
                     </LinearGradient>
                   </Pressable>
-
                   <Pressable
                     onPress={handleGoogleContinue}
                     accessibilityRole="button"

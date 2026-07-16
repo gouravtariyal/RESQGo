@@ -14,7 +14,7 @@ import type { RootStackParamList } from './types';
  * Top-level navigation container for RESQGo.
  *
  * Flow:
- *   Splash → Auth (Onboarding → Login) → App (Home + future modules)
+ *   Splash → Auth (Onboarding → Login → OTP) → App (Bottom Tabs → Home)
  *
  * Responsibilities:
  * - Wrap the tree in SafeAreaProvider + NavigationContainer
@@ -23,7 +23,7 @@ import type { RootStackParamList } from './types';
  *
  * Scalability:
  * - Auth changes stay in AuthNavigator
- * - Product modules stay in AppNavigator (or nested navigators under it)
+ * - Product modules stay in AppNavigator / BottomTabNavigator
  * - Session/bootstrap logic can later decide initialRouteName (Splash vs App)
  */
 export type { RootStackParamList };

@@ -28,8 +28,6 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: 'flat-tyre-help', title: 'Flat Tyre Help', icon: '🛞' },
 ];
 
-const BOTTOM_NAV_ITEMS = ['Home', 'History', 'Profile', 'Settings'] as const;
-
 /**
  * HomeScreen
  * ----------
@@ -184,35 +182,6 @@ export const HomeScreen: React.FC = () => {
             </View>
           </SurfaceCard>
         </View>
-
-        {/* Bottom navigation is a visual placeholder until the real tab bar arrives. */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Navigation</Text>
-          <View style={styles.bottomNav}>
-            {BOTTOM_NAV_ITEMS.map(item => {
-              const isActive = item === 'Home';
-
-              return (
-                <Pressable
-                  key={item}
-                  accessibilityRole="button"
-                  accessibilityLabel={item}
-                  style={[
-                    styles.bottomNavItem,
-                    isActive && styles.bottomNavItemActive,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.bottomNavText,
-                      isActive && styles.bottomNavTextActive,
-                    ]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
       </View>
     ),
     [
@@ -220,11 +189,6 @@ export const HomeScreen: React.FC = () => {
       styles.activityStatusText,
       styles.activityStatusWrap,
       styles.activityValue,
-      styles.bottomNav,
-      styles.bottomNavItem,
-      styles.bottomNavItemActive,
-      styles.bottomNavText,
-      styles.bottomNavTextActive,
       styles.section,
       styles.sectionTitle,
       styles.serviceHeader,
@@ -243,7 +207,8 @@ export const HomeScreen: React.FC = () => {
       start={SCREEN_GRADIENT_START}
       end={SCREEN_GRADIENT_END}
       style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+      {/* Bottom safe area is handled by the floating Bottom Tab Navigator. */}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <FlatList
           data={QUICK_ACTIONS}
           keyExtractor={item => item.id}

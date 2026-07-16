@@ -13,13 +13,27 @@ export type AuthStackParamList = {
   };
 };
 
-export type AppStackParamList = {
+/**
+ * Bottom tab routes shown after a successful OTP verification.
+ */
+export type BottomTabParamList = {
   Home: undefined;
-  // Provider: undefined;
-  // AI: undefined;
-  // Booking: undefined;
-  // Tracking: undefined;
-  // Profile: undefined;
+  History: undefined;
+  Vehicles: undefined;
+  Profile: undefined;
+};
+
+/**
+ * Authenticated app stack.
+ * MainTabs hosts the bottom tab navigator; vehicle create/edit lives above the tabs.
+ */
+export type AppStackParamList = {
+  MainTabs: NavigatorScreenParams<BottomTabParamList> | undefined;
+  AddVehicle:
+    | {
+        vehicleId?: string;
+      }
+    | undefined;
 };
 
 export type RootStackParamList = {
