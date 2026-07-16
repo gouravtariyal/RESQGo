@@ -37,6 +37,11 @@ export type AppStackParamList = {
   NearbyServices: undefined;
   EmergencySOS: undefined;
   AIAssistant: undefined;
+  HistoryDetails: {
+    historyId: string;
+  };
+  EditProfile: undefined;
+  Settings: undefined;
 };
 
 export type RootStackParamList = {

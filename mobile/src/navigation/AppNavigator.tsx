@@ -2,6 +2,8 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AssistantScreen } from '../features/assistant';
+import { HistoryDetailsScreen } from '../features/history';
+import { EditProfileScreen, SettingsScreen } from '../features/profile';
 import { ServicesScreen } from '../features/services';
 import { SOSScreen } from '../features/sos';
 import { AddVehicleScreen } from '../features/vehicles';
@@ -14,7 +16,7 @@ import type { AppStackParamList } from './types';
  * Owns the authenticated application shell.
  *
  * After OTP verification, users land here and see the Bottom Tab Navigator.
- * Stack screens (vehicles, services, SOS, AI assistant) open above the tabs.
+ * Stack screens open above the tabs for details, settings, and flows.
  */
 export type { AppStackParamList };
 
@@ -53,6 +55,27 @@ export const AppNavigator: React.FC = () => {
       <Stack.Screen
         name="AIAssistant"
         component={AssistantScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="HistoryDetails"
+        component={HistoryDetailsScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
         options={{
           animation: 'slide_from_right',
         }}
