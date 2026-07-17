@@ -58,6 +58,11 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('NearbyServices');
   }, [navigation]);
 
+  // Home lives in Bottom Tabs; Notifications is a sibling stack screen on AppNavigator.
+  const handleOpenNotifications = useCallback(() => {
+    navigation.navigate('Notifications');
+  }, [navigation]);
+
   const handleQuickActionPress = useCallback(
     (actionId: string) => {
       if (actionId === 'emergency-sos') {
@@ -97,6 +102,7 @@ export const HomeScreen: React.FC = () => {
           </View>
 
           <Pressable
+            onPress={handleOpenNotifications}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
             style={styles.notificationButton}>
@@ -140,6 +146,7 @@ export const HomeScreen: React.FC = () => {
     ),
     [
       handleGetHelp,
+      handleOpenNotifications,
       styles.greeting,
       styles.header,
       styles.headerTextWrap,
