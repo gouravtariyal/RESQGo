@@ -18,9 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type {
   AuthStackParamList,
 } from '../../navigation/types';
-import {
-  sendPhoneOtp,
-} from '../../services/firebase/authService';
+import { handlePhoneAuthError } from '../../services/firebase/phoneAuthErrors';
+import { sendPhoneOtp } from '../../services/firebase/phoneAuth';
 import {
   CTA_GRADIENT_COLORS,
   CTA_GRADIENT_END,
@@ -82,25 +81,7 @@ export const LoginScreen: React.FC = () => {
       const verificationId = await sendPhoneOtp(phoneNumber);
       navigation.navigate('OTP', { phoneNumber, verificationId });
     } catch (error) {
-      const firebaseError =
-        typeof error === 'object' && error !== null
-          ? (error as { code?: string; message?: string; stack?: string })
-          : undefined;
-
-      // Temporary debug logging — remove once phone auth is stable.
-      console.log('Firebase sendPhoneOtp error:', {
-        error,
-        code: firebaseError?.code,
-        message: firebaseError?.message,
-        stack: firebaseError?.stack,
-      });
-
-      Alert.alert(
-        'Firebase OTP Error (Debug)',
-        `code: ${firebaseError?.code ?? 'n/a'}\n\nmessage: ${
-          firebaseError?.message ?? String(error)
-        }`,
-      );
+      handlePhoneAuthError('send', error);
     } finally {
       setIsSendingOtp(false);
     }
@@ -110,6 +91,10 @@ export const LoginScreen: React.FC = () => {
   const handleGoogleContinue = useCallback(() => {
     // Intentionally left ready for Google Sign-In integration.
   }, []);
+
+  const handleCreateAccount = useCallback(() => {
+    navigation.navigate('Register');
+  }, [navigation]);
 
   const inputStateStyle = useMemo(() => {
     if (!showValidationState && !isInputFocused) {
@@ -226,6 +211,17 @@ export const LoginScreen: React.FC = () => {
                       <Text style={styles.continueText}>Continue</Text>
                     </LinearGradient>
                   </Pressable>
+
+                  <View style={styles.createAccountWrap}>
+                    <Text style={styles.createAccountPrompt}>Don't have an account?</Text>
+                    <Pressable
+                      onPress={handleCreateAccount}
+                      accessibilityRole="button"
+                      accessibilityLabel="Create Account">
+                      <Text style={styles.createAccountLink}>Create Account</Text>
+                    </Pressable>
+                  </View>
+
                   <Pressable
                     onPress={handleGoogleContinue}
                     accessibilityRole="button"

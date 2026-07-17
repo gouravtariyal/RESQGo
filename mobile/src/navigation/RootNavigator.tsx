@@ -14,7 +14,9 @@ import type { RootStackParamList } from './types';
  * Top-level navigation container for RESQGo.
  *
  * Flow:
- *   Splash → Auth (Onboarding → Login → OTP) → App (Bottom Tabs → Home)
+ *   Splash → check Firebase auth().currentUser
+ *     → App (Bottom Tabs → Home) when logged in
+ *     → Auth (Onboarding → Login → OTP) when logged out
  *
  * Responsibilities:
  * - Wrap the tree in SafeAreaProvider + NavigationContainer

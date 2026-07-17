@@ -1,14 +1,14 @@
 import { StyleSheet } from 'react-native';
 
-import { colors } from '../../theme/colors';
-import { radius } from '../../theme/radius';
-import { shadows } from '../../theme/shadows';
-import { spacing } from '../../theme/spacing';
-import { fontSizes, fontWeights, typography } from '../../theme/typography';
+import { colors } from '../../../theme/colors';
+import { radius } from '../../../theme/radius';
+import { shadows } from '../../../theme/shadows';
+import { spacing } from '../../../theme/spacing';
+import { fontSizes, fontWeights, typography } from '../../../theme/typography';
 
 /**
  * Deeper brand blue used to enrich premium gradients.
- * This stays feature-local until the shared palette grows.
+ * Matches Login / OTP feature-local gradient tokens.
  */
 const BRAND_PRIMARY_DEEP = '#1D4ED8';
 
@@ -25,8 +25,7 @@ export const SCREEN_GRADIENT_START = { x: 0, y: 0 };
 export const SCREEN_GRADIENT_END = { x: 1, y: 1 };
 
 /**
- * Creates responsive styles for the login screen.
- * Width-based scaling keeps the UI balanced across smaller and larger phones.
+ * Creates responsive styles for the register screen.
  */
 export const createStyles = (width: number) => {
   const scale = Math.min(Math.max(width / BASE_WIDTH, 0.9), 1.15);
@@ -52,8 +51,6 @@ export const createStyles = (width: number) => {
     container: {
       flex: 1,
     },
-
-    // Top branding and welcome copy.
     hero: {
       alignItems: 'center',
       marginBottom: spacing['3xl'],
@@ -74,7 +71,6 @@ export const createStyles = (width: number) => {
     title: {
       ...typography.h1,
       fontSize: Math.round(fontSizes['3xl'] * scale),
-      lineHeight: Math.round(fontSizes['3xl'] * scale * 1.15),
       color: colors.textPrimary,
       textAlign: 'center',
     },
@@ -86,8 +82,6 @@ export const createStyles = (width: number) => {
       marginTop: spacing.sm,
       paddingHorizontal: spacing.md,
     },
-
-    // Main login form card.
     formCard: {
       backgroundColor: colors.surface,
       borderRadius: radius['2xl'],
@@ -96,39 +90,20 @@ export const createStyles = (width: number) => {
       padding: spacing.xl,
       ...shadows.sm,
     },
+    fieldGroup: {
+      marginBottom: spacing.lg,
+    },
     label: {
       ...typography.label,
       color: colors.textPrimary,
       marginBottom: spacing.sm,
     },
-    phoneRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
-    countryCodeButton: {
-      minHeight: 56,
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.xl,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.background,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.xs,
-    },
-    countryCodeText: {
-      ...typography.body,
-      color: colors.textPrimary,
-      fontWeight: fontWeights.semibold,
-    },
-    countryChevron: {
+    optionalLabel: {
       ...typography.caption,
       color: colors.textSecondary,
+      fontWeight: fontWeights.regular,
     },
-    phoneInputWrap: {
-      flex: 1,
+    inputWrap: {
       minHeight: 56,
       borderRadius: radius.xl,
       borderWidth: 1,
@@ -137,13 +112,13 @@ export const createStyles = (width: number) => {
       justifyContent: 'center',
       paddingHorizontal: spacing.lg,
     },
-    phoneInputWrapFocused: {
+    inputWrapFocused: {
       borderColor: colors.primary,
     },
-    phoneInputWrapError: {
+    inputWrapError: {
       borderColor: colors.error,
     },
-    phoneInput: {
+    textInput: {
       ...typography.body,
       color: colors.textPrimary,
       paddingVertical: 0,
@@ -158,11 +133,46 @@ export const createStyles = (width: number) => {
       color: colors.error,
       marginTop: spacing.sm,
     },
-
-    // Primary and secondary actions.
+    termsRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.md,
+      marginTop: spacing.sm,
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderRadius: radius.xs,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: spacing.xxs,
+    },
+    checkboxChecked: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primary,
+    },
+    checkboxMark: {
+      ...typography.caption,
+      color: colors.textOnPrimary,
+      fontWeight: fontWeights.bold,
+      lineHeight: 14,
+    },
+    termsTextWrap: {
+      flex: 1,
+    },
+    termsText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+    },
+    termsLink: {
+      color: colors.primary,
+      fontWeight: fontWeights.semibold,
+    },
     actions: {
       marginTop: spacing.xl,
-      gap: spacing.md,
     },
     continueButton: {
       borderRadius: radius['2xl'],
@@ -184,57 +194,6 @@ export const createStyles = (width: number) => {
       color: colors.textOnPrimary,
       fontWeight: fontWeights.semibold,
       letterSpacing: 0.3,
-    },
-    googleButton: {
-      minHeight: 56,
-      borderRadius: radius['2xl'],
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'row',
-      gap: spacing.sm,
-      paddingHorizontal: spacing['2xl'],
-    },
-    googleIcon: {
-      ...typography.h3,
-      color: colors.primary,
-    },
-    googleText: {
-      ...typography.button,
-      color: colors.textPrimary,
-    },
-
-    // Create account prompt below Continue.
-    createAccountWrap: {
-      alignItems: 'center',
-      marginTop: spacing.md,
-      gap: spacing.xs,
-    },
-    createAccountPrompt: {
-      ...typography.bodySmall,
-      color: colors.textSecondary,
-      textAlign: 'center',
-    },
-    createAccountLink: {
-      ...typography.bodySmall,
-      color: colors.primary,
-      fontWeight: fontWeights.semibold,
-      textAlign: 'center',
-    },
-
-    // Footer assistance copy.
-    footer: {
-      alignItems: 'center',
-      marginTop: 'auto',
-      paddingTop: spacing['2xl'],
-      paddingBottom: spacing.sm,
-    },
-    helpText: {
-      ...typography.bodySmall,
-      color: colors.textSecondary,
-      textAlign: 'center',
     },
   });
 };

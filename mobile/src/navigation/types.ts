@@ -8,6 +8,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type AuthStackParamList = {
   Onboarding: undefined;
   Login: undefined;
+  Register: undefined;
   OTP: {
     phoneNumber: string;
     verificationId: string;

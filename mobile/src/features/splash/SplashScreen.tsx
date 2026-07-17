@@ -6,6 +6,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '../../navigation/types';
+import { waitForFirebaseCurrentUser } from '../../services/firebase/authSession';
 import {
   SPLASH_GRADIENT_COLORS,
   SPLASH_GRADIENT_END,
@@ -13,7 +14,7 @@ import {
   createStyles,
 } from './styles';
 
-/** Time on splash before advancing to onboarding */
+/** Time on splash before advancing based on auth state */
 const SPLASH_HOLD_MS = 2000;
 
 /** Intro fade + scale duration */
@@ -32,7 +33,7 @@ const APP_CREDIT = 'Made with ❤️ in India';
 type SplashNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
 /**
- * Premium splash — branded intro before the onboarding flow.
+ * Premium splash — branded intro, then routes by Firebase auth session.
  */
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<SplashNavigationProp>();
@@ -58,6 +59,8 @@ export const SplashScreen: React.FC = () => {
   );
 
   useEffect(() => {
+    let isMounted = true;
+
     const intro = Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
@@ -73,11 +76,29 @@ export const SplashScreen: React.FC = () => {
 
     intro.start();
 
-    const navigationTimer = setTimeout(() => {
+    const navigationTimer = setTimeout(async () => {
+      // Wait for Firebase Auth to restore any persisted session, then read currentUser.
+      const currentUser = await waitForFirebaseCurrentUser();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (currentUser) {
+        // Logged in → Main Bottom Tabs (Home).
+        navigation.replace('App', {
+          screen: 'MainTabs',
+          params: { screen: 'Home' },
+        });
+        return;
+      }
+
+      // Logged out → Auth stack (Onboarding).
       navigation.replace('Auth', { screen: 'Onboarding' });
     }, SPLASH_HOLD_MS);
 
     return () => {
+      isMounted = false;
       intro.stop();
       clearTimeout(navigationTimer);
     };

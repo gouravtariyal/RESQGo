@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,11 +16,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { AuthStackParamList, RootStackParamList } from '../../../navigation/types';
-import {
-  getPhoneAuthErrorMessage,
-  sendPhoneOtp,
-  verifyPhoneOtp,
-} from '../../../services/firebase/authService';
+import { handlePhoneAuthError } from '../../../services/firebase/phoneAuthErrors';
+import { sendPhoneOtp, verifyPhoneOtp } from '../../../services/firebase/phoneAuth';
 import {
   CTA_GRADIENT_COLORS,
   CTA_GRADIENT_END,
@@ -184,13 +180,7 @@ export const OtpScreen: React.FC = () => {
       setFocusedIndex(0);
       inputRefs.current[0]?.focus();
     } catch (error) {
-      Alert.alert(
-        'Unable to resend OTP',
-        getPhoneAuthErrorMessage(
-          error,
-          'We could not resend the OTP. Please try again.',
-        ),
-      );
+      handlePhoneAuthError('resend', error);
     } finally {
       setIsResending(false);
     }
@@ -226,12 +216,8 @@ export const OtpScreen: React.FC = () => {
           ],
         });
     } catch (error) {
-      const message = getPhoneAuthErrorMessage(
-        error,
-        'We could not verify the OTP. Please try again.',
-      );
+      const message = handlePhoneAuthError('verify', error);
       setVerificationError(message);
-      Alert.alert('OTP verification failed', message);
     } finally {
       setIsVerifying(false);
     }
