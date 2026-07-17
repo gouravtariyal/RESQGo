@@ -19,6 +19,9 @@ import type {
   AuthStackParamList,
 } from '../../navigation/types';
 import {
+  sendPhoneOtp,
+} from '../../services/firebase/authService';
+import {
   CTA_GRADIENT_COLORS,
   CTA_GRADIENT_END,
   CTA_GRADIENT_START,
@@ -46,6 +49,7 @@ export const LoginScreen: React.FC = () => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showValidationState, setShowValidationState] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   // The phone number is valid only when exactly 10 digits have been entered.
   const isPhoneValid = mobileNumber.length === MAX_PHONE_DIGITS;
@@ -57,8 +61,8 @@ export const LoginScreen: React.FC = () => {
     setShowValidationState(digitsOnly.length > 0);
   }, []);
 
-  // Validate the mobile number first, then move the user to OTP verification.
-  const handleContinue = useCallback(() => {
+  // Validate the number, request an OTP, then navigate only after Firebase succeeds.
+  const handleContinue = useCallback(async () => {
     if (!mobileNumber) {
       Alert.alert('Please enter your mobile number');
       setShowValidationState(true);
@@ -71,7 +75,35 @@ export const LoginScreen: React.FC = () => {
       return;
     }
 
-    navigation.navigate('OTP', { phoneNumber: `${COUNTRY_CODE}${mobileNumber}` });
+    const phoneNumber = `${COUNTRY_CODE}${mobileNumber}`;
+
+    try {
+      setIsSendingOtp(true);
+      const verificationId = await sendPhoneOtp(phoneNumber);
+      navigation.navigate('OTP', { phoneNumber, verificationId });
+    } catch (error) {
+      const firebaseError =
+        typeof error === 'object' && error !== null
+          ? (error as { code?: string; message?: string; stack?: string })
+          : undefined;
+
+      // Temporary debug logging — remove once phone auth is stable.
+      console.log('Firebase sendPhoneOtp error:', {
+        error,
+        code: firebaseError?.code,
+        message: firebaseError?.message,
+        stack: firebaseError?.stack,
+      });
+
+      Alert.alert(
+        'Firebase OTP Error (Debug)',
+        `code: ${firebaseError?.code ?? 'n/a'}\n\nmessage: ${
+          firebaseError?.message ?? String(error)
+        }`,
+      );
+    } finally {
+      setIsSendingOtp(false);
+    }
   }, [isPhoneValid, mobileNumber, navigation]);
 
   // Placeholder for the future federated auth flow.
@@ -178,11 +210,13 @@ export const LoginScreen: React.FC = () => {
                 <View style={styles.actions}>
                   <Pressable
                     onPress={handleContinue}
+                    disabled={!isPhoneValid || isSendingOtp}
                     accessibilityRole="button"
                     accessibilityLabel="Continue"
                     style={[
                       styles.continueButton,
-                      !isPhoneValid && styles.continueButtonDisabled,
+                      (!isPhoneValid || isSendingOtp) &&
+                        styles.continueButtonDisabled,
                     ]}>
                     <LinearGradient
                       colors={[...CTA_GRADIENT_COLORS]}

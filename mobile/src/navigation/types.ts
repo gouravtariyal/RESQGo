@@ -10,6 +10,7 @@ export type AuthStackParamList = {
   Login: undefined;
   OTP: {
     phoneNumber: string;
+    verificationId: string;
   };
 };
 

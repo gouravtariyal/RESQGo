@@ -14,7 +14,7 @@ import {
 } from './styles';
 
 /** Time on splash before advancing to onboarding */
-const SPLASH_HOLD_MS = 4000;
+const SPLASH_HOLD_MS = 2000;
 
 /** Intro fade + scale duration */
 const INTRO_DURATION_MS = 1200;

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1054069441920",
+    "project_id": "resqgo-10f03",
+    "storage_bucket": "resqgo-10f03.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054069441920:android:51acbb5310845673b62d65",
+        "android_client_info": {
+          "package_name": "com.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJjXgfBZGgQUI1aWESvMPlZCxlUYYYXzM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054069441920:android:a5977f78e5b30c0ab62d65",
+        "android_client_info": {
+          "package_name": "com.resqgo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJjXgfBZGgQUI1aWESvMPlZCxlUYYYXzM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
