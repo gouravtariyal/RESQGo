@@ -7,6 +7,7 @@
  */
 export {
   getFirebaseCurrentUser,
+  signOutFirebaseUser,
   waitForFirebaseCurrentUser,
 } from './authSession';
 export { sendPhoneOtp, verifyPhoneOtp } from './phoneAuth';

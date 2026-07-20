@@ -20,3 +20,10 @@ export function waitForFirebaseCurrentUser(): Promise<FirebaseAuthTypes.User | n
     });
   });
 }
+
+/**
+ * Signs the current Firebase user out of the device session.
+ */
+export async function signOutFirebaseUser(): Promise<void> {
+  await auth().signOut();
+}

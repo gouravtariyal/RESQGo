@@ -12,6 +12,7 @@ import type {
   BottomTabParamList,
   RootStackParamList,
 } from '../../navigation/types';
+import { signOutFirebaseUser } from '../../services/firebase/authSession';
 import {
   PROFILE_MENU_ITEMS,
   type ProfileMenuItem,
@@ -32,6 +33,36 @@ type ProfileNavigationProp = CompositeNavigationProp<
 >;
 
 /**
+ * Walks up nested navigators until the root stack that owns Auth / App / Splash.
+ */
+const resetRootToLogin = (navigation: ProfileNavigationProp) => {
+  let parent = navigation.getParent();
+
+  while (parent) {
+    const routeNames = parent.getState()?.routeNames ?? [];
+
+    if (routeNames.includes('Auth') && routeNames.includes('App')) {
+      parent.reset({
+        index: 0,
+        routes: [{ name: 'Auth', params: { screen: 'Login' } }],
+      } as Parameters<typeof parent.reset>[0]);
+      return;
+    }
+
+    parent = parent.getParent();
+  }
+
+  // Fallback if parent climbing fails for any reason.
+  navigation
+    .getParent<NativeStackNavigationProp<RootStackParamList>>()
+    ?.getParent<NativeStackNavigationProp<RootStackParamList>>()
+    ?.reset({
+      index: 0,
+      routes: [{ name: 'Auth', params: { screen: 'Login' } }],
+    });
+};
+
+/**
  * ProfileScreen
  * -------------
  * Premium account hub with identity card and quick-action menu.
@@ -42,20 +73,24 @@ export const ProfileScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(width), [width]);
   const { profile } = useProfileStore();
 
+  /**
+   * Signs out of Firebase, then resets the root navigator into Auth → Login.
+   */
   const handleLogout = useCallback(() => {
     Alert.alert('Logout', 'Are you sure you want to logout from RESQGo?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: () => {
-          // Return the user to the auth flow after logout.
-          navigation
-            .getParent<NativeStackNavigationProp<RootStackParamList>>()
-            ?.reset({
-              index: 0,
-              routes: [{ name: 'Auth', params: { screen: 'Login' } }],
-            });
+        onPress: async () => {
+          try {
+            await signOutFirebaseUser();
+          } catch {
+            Alert.alert('Logout failed', 'Unable to end your session. Please try again.');
+            return;
+          }
+
+          resetRootToLogin(navigation);
         },
       },
     ]);
@@ -68,10 +103,10 @@ export const ProfileScreen: React.FC = () => {
           navigation.navigate('EditProfile');
           return;
         case 'my-vehicles':
-          navigation.navigate('MainTabs', { screen: 'Vehicles' });
+          navigation.navigate('Vehicles');
           return;
         case 'service-history':
-          navigation.navigate('MainTabs', { screen: 'History' });
+          navigation.navigate('History');
           return;
         case 'emergency-contacts':
           navigation.navigate('EmergencyContacts');
@@ -107,7 +142,6 @@ export const ProfileScreen: React.FC = () => {
       start={SCREEN_GRADIENT_START}
       end={SCREEN_GRADIENT_END}
       style={styles.gradient}>
-      {/* Bottom inset is handled by the floating tab bar. */}
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -116,10 +150,8 @@ export const ProfileScreen: React.FC = () => {
             My Profile
           </Text>
 
-          {/* Identity summary */}
           <ProfileCard profile={profile} />
 
-          {/* Quick actions */}
           <Text style={styles.menuSectionTitle}>Quick Actions</Text>
           <View style={styles.menuCard}>
             {PROFILE_MENU_ITEMS.map((item, index) => (
@@ -132,8 +164,9 @@ export const ProfileScreen: React.FC = () => {
             ))}
           </View>
 
-          {/* Shortcut into full settings */}
-          <Text style={[styles.menuSectionTitle, { marginTop: 24 }]}>Preferences</Text>
+          <Text style={[styles.menuSectionTitle, styles.preferencesSectionTitle]}>
+            Preferences
+          </Text>
           <View style={styles.menuCard}>
             <MenuItem
               item={{ id: 'notifications', title: 'Settings', icon: '⚙️' }}

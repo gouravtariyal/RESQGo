@@ -138,6 +138,9 @@ export const createStyles = (width: number) => {
       textTransform: 'uppercase',
       letterSpacing: 0.6,
     },
+    preferencesSectionTitle: {
+      marginTop: spacing['2xl'],
+    },
     menuCard: {
       backgroundColor: colors.surface,
       borderRadius: radius['2xl'],
