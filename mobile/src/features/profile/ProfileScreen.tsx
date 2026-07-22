@@ -12,7 +12,7 @@ import type {
   BottomTabParamList,
   RootStackParamList,
 } from '../../navigation/types';
-import { signOutFirebaseUser } from '../../services/firebase/authSession';
+import { logout as logoutAuthSession } from '../../services/authService';
 import {
   PROFILE_MENU_ITEMS,
   type ProfileMenuItem,
@@ -44,7 +44,7 @@ const resetRootToLogin = (navigation: ProfileNavigationProp) => {
     if (routeNames.includes('Auth') && routeNames.includes('App')) {
       parent.reset({
         index: 0,
-        routes: [{ name: 'Auth', params: { screen: 'Login' } }],
+        routes: [{ name: 'Auth', params: { screen: 'Onboarding' } }],
       } as Parameters<typeof parent.reset>[0]);
       return;
     }
@@ -58,7 +58,7 @@ const resetRootToLogin = (navigation: ProfileNavigationProp) => {
     ?.getParent<NativeStackNavigationProp<RootStackParamList>>()
     ?.reset({
       index: 0,
-      routes: [{ name: 'Auth', params: { screen: 'Login' } }],
+      routes: [{ name: 'Auth', params: { screen: 'Onboarding' } }],
     });
 };
 
@@ -74,7 +74,7 @@ export const ProfileScreen: React.FC = () => {
   const { profile } = useProfileStore();
 
   /**
-   * Signs out of Firebase, then resets the root navigator into Auth → Login.
+   * Clears the stored JWT session, then resets the root navigator into Auth → Login.
    */
   const handleLogout = useCallback(() => {
     Alert.alert('Logout', 'Are you sure you want to logout from RESQGo?', [
@@ -84,7 +84,7 @@ export const ProfileScreen: React.FC = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            await signOutFirebaseUser();
+            await logoutAuthSession();
           } catch {
             Alert.alert('Logout failed', 'Unable to end your session. Please try again.');
             return;

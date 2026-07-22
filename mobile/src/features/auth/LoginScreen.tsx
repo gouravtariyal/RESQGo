@@ -15,9 +15,11 @@ import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LoadingOverlay } from '../../components/loaders/LoadingOverlay';
 import type {
   AuthStackParamList,
 } from '../../navigation/types';
+import { checkUser } from '../../services/authService';
 import { handlePhoneAuthError } from '../../services/firebase/phoneAuthErrors';
 import { sendPhoneOtp } from '../../services/firebase/phoneAuth';
 import {
@@ -39,7 +41,8 @@ const COUNTRY_CODE = '+91';
  * LoginScreen
  * -----------
  * Premium mobile-number login entry point for the auth flow.
- * Users enter a 10-digit Indian mobile number and continue to OTP verification.
+ * Existing users verify with Firebase OTP and enter Home.
+ * New users are sent to Register.
  */
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavigationProp>();
@@ -48,7 +51,7 @@ export const LoginScreen: React.FC = () => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showValidationState, setShowValidationState] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // The phone number is valid only when exactly 10 digits have been entered.
   const isPhoneValid = mobileNumber.length === MAX_PHONE_DIGITS;
@@ -60,7 +63,11 @@ export const LoginScreen: React.FC = () => {
     setShowValidationState(digitsOnly.length > 0);
   }, []);
 
-  // Validate the number, request an OTP, then navigate only after Firebase succeeds.
+  /**
+   * Continue:
+   * - exists → Firebase OTP → Home
+   * - missing → Register
+   */
   const handleContinue = useCallback(async () => {
     if (!mobileNumber) {
       Alert.alert('Please enter your mobile number');
@@ -74,16 +81,39 @@ export const LoginScreen: React.FC = () => {
       return;
     }
 
-    const phoneNumber = `${COUNTRY_CODE}${mobileNumber}`;
-
     try {
-      setIsSendingOtp(true);
-      const verificationId = await sendPhoneOtp(phoneNumber);
-      navigation.navigate('OTP', { phoneNumber, verificationId });
+      setIsLoading(true);
+      const response = await checkUser({ phoneNumber: mobileNumber });
+
+      if (!response.exists) {
+        navigation.navigate('Register', { phoneNumber: mobileNumber });
+        return;
+      }
+
+      const e164PhoneNumber = `${COUNTRY_CODE}${mobileNumber}`;
+      const verificationId = await sendPhoneOtp(e164PhoneNumber);
+
+      navigation.navigate('OTP', {
+        phoneNumber: e164PhoneNumber,
+        verificationId,
+      });
     } catch (error) {
-      handlePhoneAuthError('send', error);
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        String((error as { code?: string }).code || '').startsWith('auth/')
+      ) {
+        handlePhoneAuthError('send', error);
+        return;
+      }
+
+      Alert.alert(
+        'Unable to continue',
+        error instanceof Error ? error.message : 'Please try again.',
+      );
     } finally {
-      setIsSendingOtp(false);
+      setIsLoading(false);
     }
   }, [isPhoneValid, mobileNumber, navigation]);
 
@@ -93,8 +123,10 @@ export const LoginScreen: React.FC = () => {
   }, []);
 
   const handleCreateAccount = useCallback(() => {
-    navigation.navigate('Register');
-  }, [navigation]);
+    navigation.navigate('Register', {
+      phoneNumber: mobileNumber || undefined,
+    });
+  }, [mobileNumber, navigation]);
 
   const inputStateStyle = useMemo(() => {
     if (!showValidationState && !isInputFocused) {
@@ -120,128 +152,132 @@ export const LoginScreen: React.FC = () => {
   ]);
 
   return (
-    <LinearGradient
-      colors={[...SCREEN_GRADIENT_COLORS]}
-      start={SCREEN_GRADIENT_START}
-      end={SCREEN_GRADIENT_END}
-      style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardView}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-            <View style={styles.container}>
-              {/* Brand and welcome section */}
-              <View style={styles.hero}>
-                <View
-                  style={styles.logoWrap}
-                  accessibilityRole="image"
-                  accessibilityLabel="RESQGo logo">
-                  <Text style={styles.logoEmoji}>🚗</Text>
-                </View>
-
-                <Text style={styles.title} accessibilityRole="header">
-                  Welcome Back
-                </Text>
-
-                <Text style={styles.subtitle}>Enter your mobile number to continue.</Text>
-              </View>
-
-              {/* Mobile number form */}
-              <View style={styles.formCard}>
-                <Text style={styles.label}>Mobile Number</Text>
-
-                <View style={styles.phoneRow}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Country code picker"
-                    style={styles.countryCodeButton}>
-                    <Text style={styles.countryCodeText}>{COUNTRY_CODE}</Text>
-                    <Text style={styles.countryChevron}>▼</Text>
-                  </Pressable>
-
-                  <View style={[styles.phoneInputWrap, inputStateStyle]}>
-                    <TextInput
-                      value={mobileNumber}
-                      onChangeText={handleMobileChange}
-                      onFocus={() => setIsInputFocused(true)}
-                      onBlur={() => {
-                        setIsInputFocused(false);
-                        setShowValidationState(true);
-                      }}
-                      style={styles.phoneInput}
-                      keyboardType="number-pad"
-                      maxLength={MAX_PHONE_DIGITS}
-                      placeholder="Enter mobile number"
-                      placeholderTextColor="#9CA3AF"
-                      returnKeyType="done"
-                      accessibilityLabel="Mobile number input"
-                    />
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={[...SCREEN_GRADIENT_COLORS]}
+        start={SCREEN_GRADIENT_START}
+        end={SCREEN_GRADIENT_END}
+        style={styles.gradient}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.keyboardView}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}>
+              <View style={styles.container}>
+                {/* Brand and welcome section */}
+                <View style={styles.hero}>
+                  <View
+                    style={styles.logoWrap}
+                    accessibilityRole="image"
+                    accessibilityLabel="RESQGo logo">
+                    <Text style={styles.logoEmoji}>🚗</Text>
                   </View>
+
+                  <Text style={styles.title} accessibilityRole="header">
+                    Welcome Back
+                  </Text>
+
+                  <Text style={styles.subtitle}>Enter your mobile number to continue.</Text>
                 </View>
 
-                {mobileNumber.length > 0 && !isPhoneValid ? (
-                  <Text style={styles.errorText}>
-                    Please enter a valid 10-digit mobile number.
-                  </Text>
-                ) : (
-                  <Text style={styles.helperText}>We will send a one-time password to verify you.</Text>
-                )}
+                {/* Mobile number form */}
+                <View style={styles.formCard}>
+                  <Text style={styles.label}>Mobile Number</Text>
 
-                {/* Primary and secondary authentication actions */}
-                <View style={styles.actions}>
-                  <Pressable
-                    onPress={handleContinue}
-                    disabled={!isPhoneValid || isSendingOtp}
-                    accessibilityRole="button"
-                    accessibilityLabel="Continue"
-                    style={[
-                      styles.continueButton,
-                      (!isPhoneValid || isSendingOtp) &&
-                        styles.continueButtonDisabled,
-                    ]}>
-                    <LinearGradient
-                      colors={[...CTA_GRADIENT_COLORS]}
-                      start={CTA_GRADIENT_START}
-                      end={CTA_GRADIENT_END}
-                      style={styles.continueGradient}>
-                      <Text style={styles.continueText}>Continue</Text>
-                    </LinearGradient>
-                  </Pressable>
-
-                  <View style={styles.createAccountWrap}>
-                    <Text style={styles.createAccountPrompt}>Don't have an account?</Text>
+                  <View style={styles.phoneRow}>
                     <Pressable
-                      onPress={handleCreateAccount}
                       accessibilityRole="button"
-                      accessibilityLabel="Create Account">
-                      <Text style={styles.createAccountLink}>Create Account</Text>
+                      accessibilityLabel="Country code picker"
+                      style={styles.countryCodeButton}>
+                      <Text style={styles.countryCodeText}>{COUNTRY_CODE}</Text>
+                      <Text style={styles.countryChevron}>▼</Text>
+                    </Pressable>
+
+                    <View style={[styles.phoneInputWrap, inputStateStyle]}>
+                      <TextInput
+                        value={mobileNumber}
+                        onChangeText={handleMobileChange}
+                        onFocus={() => setIsInputFocused(true)}
+                        onBlur={() => {
+                          setIsInputFocused(false);
+                          setShowValidationState(true);
+                        }}
+                        style={styles.phoneInput}
+                        keyboardType="number-pad"
+                        maxLength={MAX_PHONE_DIGITS}
+                        placeholder="Enter mobile number"
+                        placeholderTextColor="#9CA3AF"
+                        returnKeyType="done"
+                        accessibilityLabel="Mobile number input"
+                      />
+                    </View>
+                  </View>
+
+                  {mobileNumber.length > 0 && !isPhoneValid ? (
+                    <Text style={styles.errorText}>
+                      Please enter a valid 10-digit mobile number.
+                    </Text>
+                  ) : (
+                    <Text style={styles.helperText}>Enter your registered mobile number to continue.</Text>
+                  )}
+
+                  {/* Primary and secondary authentication actions */}
+                  <View style={styles.actions}>
+                    <Pressable
+                      onPress={handleContinue}
+                      disabled={!isPhoneValid || isLoading}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continue"
+                      style={[
+                        styles.continueButton,
+                        (!isPhoneValid || isLoading) &&
+                          styles.continueButtonDisabled,
+                      ]}>
+                      <LinearGradient
+                        colors={[...CTA_GRADIENT_COLORS]}
+                        start={CTA_GRADIENT_START}
+                        end={CTA_GRADIENT_END}
+                        style={styles.continueGradient}>
+                        <Text style={styles.continueText}>Continue</Text>
+                      </LinearGradient>
+                    </Pressable>
+
+                    <View style={styles.createAccountWrap}>
+                      <Text style={styles.createAccountPrompt}>Don't have an account?</Text>
+                      <Pressable
+                        onPress={handleCreateAccount}
+                        accessibilityRole="button"
+                        accessibilityLabel="Create Account">
+                        <Text style={styles.createAccountLink}>Create Account</Text>
+                      </Pressable>
+                    </View>
+
+                    <Pressable
+                      onPress={handleGoogleContinue}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continue with Google"
+                      style={styles.googleButton}>
+                      <Text style={styles.googleIcon}>G</Text>
+                      <Text style={styles.googleText}>Continue with Google</Text>
                     </Pressable>
                   </View>
+                </View>
 
-                  <Pressable
-                    onPress={handleGoogleContinue}
-                    accessibilityRole="button"
-                    accessibilityLabel="Continue with Google"
-                    style={styles.googleButton}>
-                    <Text style={styles.googleIcon}>G</Text>
-                    <Text style={styles.googleText}>Continue with Google</Text>
-                  </Pressable>
+                {/* Footer assistance copy */}
+                <View style={styles.footer}>
+                  <Text style={styles.helpText}>Need Help?</Text>
                 </View>
               </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </LinearGradient>
 
-              {/* Footer assistance copy */}
-              <View style={styles.footer}>
-                <Text style={styles.helpText}>Need Help?</Text>
-              </View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </LinearGradient>
+      <LoadingOverlay visible={isLoading} />
+    </View>
   );
 };
 

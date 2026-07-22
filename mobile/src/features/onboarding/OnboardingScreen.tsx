@@ -84,12 +84,6 @@ export const OnboardingScreen: React.FC = () => {
               title="Live GPS Tracking & Emergency SOS"
               subtitle="Share your live location and raise SOS when needed."
             />
-
-            <FeatureCard
-              icon="�"
-              title="24x7 Emergency Assistance"
-              subtitle="Get instant help anytime, anywhere. Our team is always ready to assist you."
-            />
           </View>
 
           {/* Bottom actions */}

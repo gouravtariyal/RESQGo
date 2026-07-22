@@ -23,7 +23,6 @@ export const BottomTabNavigator: React.FC = () => {
       tabBar={props => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        animation: 'shift',
       }}>
       <Tab.Screen
         name="Home"

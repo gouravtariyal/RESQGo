@@ -6,7 +6,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '../../navigation/types';
-import { waitForFirebaseCurrentUser } from '../../services/firebase/authSession';
+import { restoreAuthSession } from '../../services/authService';
 import {
   SPLASH_GRADIENT_COLORS,
   SPLASH_GRADIENT_END,
@@ -33,14 +33,14 @@ const APP_CREDIT = 'Made with ❤️ in India';
 type SplashNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
 /**
- * Premium splash — branded intro, then routes by Firebase auth session.
+ * Premium splash — branded intro, then routes by stored JWT session.
  */
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<SplashNavigationProp>();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(width), [width]);
 
-  const opacity = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
   const logoScale = useRef(new Animated.Value(LOGO_SCALE_FROM)).current;
 
   const contentAnimatedStyle = useMemo(
@@ -61,6 +61,8 @@ export const SplashScreen: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
 
+    // Soft entrance — keep content visible (opacity never 0) to avoid blank splash.
+    opacity.setValue(0.35);
     const intro = Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
@@ -77,24 +79,32 @@ export const SplashScreen: React.FC = () => {
     intro.start();
 
     const navigationTimer = setTimeout(async () => {
-      // Wait for Firebase Auth to restore any persisted session, then read currentUser.
-      const currentUser = await waitForFirebaseCurrentUser();
+      let isAuthenticated = false;
+
+      try {
+        isAuthenticated = await restoreAuthSession();
+      } catch (error) {
+        console.warn('[Splash] Auth restore failed', error);
+        isAuthenticated = false;
+      }
 
       if (!isMounted) {
         return;
       }
 
-      if (currentUser) {
-        // Logged in → Main Bottom Tabs (Home).
-        navigation.replace('App', {
-          screen: 'MainTabs',
-          params: { screen: 'Home' },
-        });
-        return;
-      }
+      try {
+        if (isAuthenticated) {
+          navigation.replace('App', {
+            screen: 'MainTabs',
+            params: { screen: 'Home' },
+          });
+          return;
+        }
 
-      // Logged out → Auth stack (Onboarding).
-      navigation.replace('Auth', { screen: 'Onboarding' });
+        navigation.replace('Auth', { screen: 'Onboarding' });
+      } catch (navError) {
+        console.warn('[Splash] Navigation failed', navError);
+      }
     }, SPLASH_HOLD_MS);
 
     return () => {

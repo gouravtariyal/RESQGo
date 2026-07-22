@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { AuthStackParamList, RootStackParamList } from '../../../navigation/types';
 import { handlePhoneAuthError } from '../../../services/firebase/phoneAuthErrors';
 import { sendPhoneOtp, verifyPhoneOtp } from '../../../services/firebase/phoneAuth';
+import { navigateToAppHome } from '../../../utils/navigation';
 import {
   CTA_GRADIENT_COLORS,
   CTA_GRADIENT_END,
@@ -187,7 +188,7 @@ export const OtpScreen: React.FC = () => {
   }, [hasCountdownCompleted, isResending, route.params.phoneNumber]);
 
   /**
-   * After a valid 6-digit OTP is entered, reset into the authenticated app flow.
+   * After Firebase OTP succeeds, enter the authenticated app (Home).
    */
   const handleVerifyOtp = useCallback(async () => {
     if (!isOtpValid) {
@@ -200,9 +201,17 @@ export const OtpScreen: React.FC = () => {
       setVerificationError(null);
       await verifyPhoneOtp(verificationId, otpValue);
 
-      // Reset the root stack into the authenticated Bottom Tabs (Home by default).
+      const rootNavigation =
+        navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+
+      if (rootNavigation) {
+        navigateToAppHome(rootNavigation);
+        return;
+      }
+
       navigation
-        .getParent<NativeStackNavigationProp<RootStackParamList>>()
+        .getParent()
+        ?.getParent<NativeStackNavigationProp<RootStackParamList>>()
         ?.reset({
           index: 0,
           routes: [

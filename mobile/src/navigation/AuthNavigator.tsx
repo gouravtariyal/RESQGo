@@ -12,13 +12,9 @@ import type { AuthStackParamList } from './types';
  * Owns the unauthenticated experience: first-run onboarding, login, register, and OTP.
  *
  * Flow:
- *   Onboarding → Login → OTP
- *   Login → Register
- *
- * After a successful OTP verification, the OTP screen resets the root stack
- * into the authenticated App navigator (Bottom Tabs → Home).
- *
- * Future auth screens (ForgotPassword) should be registered here.
+ *   Onboarding → Login
+ *   Login (existing user) → OTP → App Home
+ *   Login (new user / Create Account) → Register → Login
  */
 export type { AuthStackParamList };
 
