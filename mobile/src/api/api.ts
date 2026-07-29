@@ -18,7 +18,7 @@ export const BASE_URL = Platform.select({
  * Attaches JWT automatically when a token is stored.
  */
 export const api = axios.create({
-  baseURL: "http://10.0.2.2:5000/api",
+  baseURL: `${BASE_URL}/api`,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
