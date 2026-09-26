@@ -9,13 +9,19 @@ const HOST = '0.0.0.0';
 
 const startServer = async () => {
   try {
-    await connectDB();
+    const isDbConnected = await connectDB();
+
+    if (!isDbConnected) {
+      console.warn('⚠️  Server starting without active MongoDB connection.');
+      console.warn('    Database operations will fail until valid MONGODB_URI is provided.\n');
+    }
 
     app.listen(PORT, HOST, () => {
       console.log(`🚀 RESQGo Backend running on http://${HOST}:${PORT}`);
+      console.log(`📡 Health check available at http://${HOST}:${PORT}/health`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server');
+    console.error('❌ Failed to start server:');
     console.error(error.message);
     process.exit(1);
   }

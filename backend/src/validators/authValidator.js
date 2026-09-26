@@ -1,50 +1,102 @@
-/**
- * Auth request validators.
- * Returns an error message string when invalid, otherwise null.
- */
-
-const PHONE_REGEX = /^\+?[0-9]{10,15}$/;
+const validator = require('validator');
+const { normalizePhoneNumber } = require('../utils/phone');
 
 /**
- * Validates the payload for register / login-by-phone flows.
+ * Validates user registration payload.
  */
-const validatePhoneAuth = (body = {}) => {
-  const phoneNumber = String(body.phoneNumber || '').trim();
-  const name = body.name != null ? String(body.name).trim() : undefined;
+const validateRegisterInput = (body = {}) => {
+  const errors = {};
+
+  const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : '';
+  const phoneNumber = normalizePhoneNumber(body.phoneNumber);
+  const email = typeof body.email === 'string' ? body.email.trim() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  if (!fullName) {
+    errors.fullName = 'Full name is required.';
+  } else if (fullName.length < 2 || fullName.length > 80) {
+    errors.fullName = 'Full name must be between 2 and 80 characters.';
+  }
 
   if (!phoneNumber) {
-    return 'phoneNumber is required';
+    errors.phoneNumber = 'Phone number is required.';
+  } else if (phoneNumber.length !== 10) {
+    errors.phoneNumber = 'Please enter a valid 10-digit mobile number.';
   }
 
-  if (!PHONE_REGEX.test(phoneNumber)) {
-    return 'phoneNumber must be 10–15 digits (optional leading +)';
+  if (email && !validator.isEmail(email)) {
+    errors.email = 'Please provide a valid email address.';
   }
 
-  if (name !== undefined && name.length > 80) {
-    return 'name must be 80 characters or fewer';
+  if (!password) {
+    errors.password = 'Password is required.';
+  } else if (password.length < 6) {
+    errors.password = 'Password must be at least 6 characters.';
   }
 
-  return null;
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    values: {
+      fullName,
+      phoneNumber,
+      email,
+      password,
+    },
+  };
 };
 
 /**
- * Validates the payload for profile sync after Firebase OTP.
+ * Validates user login payload.
  */
-const validateSyncAuth = (body = {}) => {
-  const phoneError = validatePhoneAuth(body);
-  if (phoneError) {
-    return phoneError;
+const validateLoginInput = (body = {}) => {
+  const errors = {};
+
+  const phoneNumber = normalizePhoneNumber(body.phoneNumber);
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  if (!phoneNumber) {
+    errors.phoneNumber = 'Phone number is required.';
   }
 
-  const firebaseUid = String(body.firebaseUid || '').trim();
-  if (!firebaseUid) {
-    return 'firebaseUid is required';
+  if (!password) {
+    errors.password = 'Password is required.';
   }
 
-  return null;
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    values: {
+      phoneNumber,
+      password,
+    },
+  };
+};
+
+/**
+ * Validates check-user payload.
+ */
+const validateCheckUserInput = (body = {}) => {
+  const errors = {};
+  const phoneNumber = normalizePhoneNumber(body.phoneNumber);
+
+  if (!phoneNumber) {
+    errors.phoneNumber = 'Phone number is required.';
+  } else if (phoneNumber.length !== 10) {
+    errors.phoneNumber = 'Please enter a valid 10-digit mobile number.';
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    values: {
+      phoneNumber,
+    },
+  };
 };
 
 module.exports = {
-  validatePhoneAuth,
-  validateSyncAuth,
+  validateRegisterInput,
+  validateLoginInput,
+  validateCheckUserInput,
 };
