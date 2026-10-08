@@ -15,6 +15,7 @@ export type AuthStackParamList = {
     phoneNumber: string;
     verificationId: string;
   };
+  Support: undefined;
 };
 
 /**

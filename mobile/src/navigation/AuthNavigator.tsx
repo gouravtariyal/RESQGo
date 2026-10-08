@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LoginScreen, OtpScreen } from '../features/auth';
 import { RegisterScreen } from '../features/auth/register';
 import { OnboardingScreen } from '../features/onboarding';
+import { SupportScreen } from '../features/support';
 import type { AuthStackParamList } from './types';
 
 /**
@@ -32,6 +33,7 @@ export const AuthNavigator: React.FC = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="OTP" component={OtpScreen} />
+      <Stack.Screen name="Support" component={SupportScreen} />
     </Stack.Navigator>
   );
 };

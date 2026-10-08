@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { AppStackParamList } from '../../navigation/types';
+import type { AppStackParamList, AuthStackParamList } from '../../navigation/types';
 import { BUSINESS_HOURS, DUMMY_FAQS, SUPPORT_CHANNELS } from './data';
 import { FAQCard } from './FAQCard';
 import {
@@ -26,7 +26,9 @@ import {
   createStyles,
 } from './styles';
 
-type SupportNavigationProp = NativeStackNavigationProp<AppStackParamList, 'Support'>;
+type SupportNavigationProp =
+  | NativeStackNavigationProp<AppStackParamList, 'Support'>
+  | NativeStackNavigationProp<AuthStackParamList, 'Support'>;
 
 /**
  * SupportScreen

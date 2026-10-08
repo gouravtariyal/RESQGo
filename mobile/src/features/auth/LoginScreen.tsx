@@ -18,10 +18,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingOverlay } from '../../components/loaders/LoadingOverlay';
 import type {
   AuthStackParamList,
+  RootStackParamList,
 } from '../../navigation/types';
 import { checkUser } from '../../services/authService';
+import {
+  GoogleSignInCancelledError,
+  signInWithGoogle,
+} from '../../services/firebase/googleAuth';
 import { handlePhoneAuthError } from '../../services/firebase/phoneAuthErrors';
 import { sendPhoneOtp } from '../../services/firebase/phoneAuth';
+import { navigateToAppHome } from '../../utils/navigation';
 import {
   CTA_GRADIENT_COLORS,
   CTA_GRADIENT_END,
@@ -117,10 +123,51 @@ export const LoginScreen: React.FC = () => {
     }
   }, [isPhoneValid, mobileNumber, navigation]);
 
-  // Placeholder for the future federated auth flow.
-  const handleGoogleContinue = useCallback(() => {
-    // Intentionally left ready for Google Sign-In integration.
-  }, []);
+  const handleNeedHelp = useCallback(() => {
+    navigation.navigate('Support');
+  }, [navigation]);
+
+  const handleGoogleContinue = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await signInWithGoogle();
+
+      const rootNavigation =
+        navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+
+      if (rootNavigation) {
+        navigateToAppHome(rootNavigation);
+        return;
+      }
+
+      navigation
+        .getParent()
+        ?.getParent<NativeStackNavigationProp<RootStackParamList>>()
+        ?.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'App',
+              params: {
+                screen: 'MainTabs',
+                params: { screen: 'Home' },
+              },
+            },
+          ],
+        });
+    } catch (error) {
+      if (error instanceof GoogleSignInCancelledError) {
+        return;
+      }
+
+      Alert.alert(
+        'Google Sign-In failed',
+        error instanceof Error ? error.message : 'Please try again.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigation]);
 
   const handleCreateAccount = useCallback(() => {
     navigation.navigate('Register', {
@@ -257,6 +304,7 @@ export const LoginScreen: React.FC = () => {
 
                     <Pressable
                       onPress={handleGoogleContinue}
+                      disabled={isLoading}
                       accessibilityRole="button"
                       accessibilityLabel="Continue with Google"
                       style={styles.googleButton}>
@@ -268,7 +316,12 @@ export const LoginScreen: React.FC = () => {
 
                 {/* Footer assistance copy */}
                 <View style={styles.footer}>
-                  <Text style={styles.helpText}>Need Help?</Text>
+                  <Pressable
+                    onPress={handleNeedHelp}
+                    accessibilityRole="button"
+                    accessibilityLabel="Need help">
+                    <Text style={styles.helpText}>Need Help?</Text>
+                  </Pressable>
                 </View>
               </View>
             </ScrollView>

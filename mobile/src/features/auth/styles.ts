@@ -233,7 +233,8 @@ export const createStyles = (width: number) => {
     },
     helpText: {
       ...typography.bodySmall,
-      color: colors.textSecondary,
+      color: colors.primary,
+      fontWeight: fontWeights.semibold,
       textAlign: 'center',
     },
   });

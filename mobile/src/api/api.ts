@@ -1,24 +1,17 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 
+import { API_BASE_URL, API_URL } from '../config/env';
 import { getAuthToken } from '../utils/storage';
 
-/**
- * Android emulator maps host loopback to 10.0.2.2.
- * iOS simulator can use localhost directly.
- */
-export const BASE_URL = Platform.select({
-  android: 'http://10.0.2.2:5000',
-  ios: 'http://localhost:5000',
-  default: 'http://10.0.2.2:5000',
-}) as string;
+/** Host root without `/api` suffix (health checks, debugging). */
+export const BASE_URL = API_BASE_URL;
 
 /**
  * Shared Axios instance for all RESQGo API calls.
  * Attaches JWT automatically when a token is stored.
  */
 export const api = axios.create({
-  baseURL: "http://10.0.2.2:5000/api",
+  baseURL: API_URL,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
