@@ -24,13 +24,20 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'resqgo_secret_key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await getUserById(decoded.id);
 
     if (!user) {
       return res.status(401).json({
         success: false,
         message: 'User belonging to this token no longer exists.',
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked. Please contact support.',
       });
     }
 

@@ -1,16 +1,28 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const authRoutes = require('./routes/authRoutes');
+const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(helmet());
+
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:5173', 'http://localhost:4173'],
+  credentials: true,
+}));
+
+app.use(express.json({ limit: '16kb' }));
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminAuthRoutes);
 
 // Health check endpoints
 app.get('/', (req, res) => {

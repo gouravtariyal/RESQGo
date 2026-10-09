@@ -54,21 +54,25 @@ const registerUser = async ({ fullName, phoneNumber, email, password }) => {
 const loginUser = async ({ phoneNumber, password }) => {
   const user = await User.findOne({ phoneNumber });
 
-  if (!user) {
-    const error = new Error('User not found.');
-    error.statusCode = 404;
-    throw error;
-  }
+  const isPasswordCorrect = user ? await bcrypt.compare(password, user.password) : false;
 
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-
-  if (!isPasswordCorrect) {
-    const error = new Error('Invalid credentials.');
+  if (!user || !isPasswordCorrect) {
+    const error = new Error('Invalid phone number or password.');
     error.statusCode = 401;
     throw error;
   }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'resqgo_secret_key', {
+  if (user.isBlocked) {
+    const error = new Error(
+      user.blockedReason
+        ? `Your account has been blocked: ${user.blockedReason}. Please contact support.`
+        : 'Your account has been blocked. Please contact support.'
+    );
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 
