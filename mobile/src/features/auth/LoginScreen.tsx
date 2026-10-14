@@ -5,6 +5,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   Text,
   TextInput,
   View,
@@ -14,8 +15,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { LoadingOverlay } from '../../components/loaders/LoadingOverlay';
+import { AuthHeroGraphic } from '../../components/common/AuthHeroGraphic';
 import type {
   AuthStackParamList,
   RootStackParamList,
@@ -46,34 +49,29 @@ const COUNTRY_CODE = '+91';
 /**
  * LoginScreen
  * -----------
- * Premium mobile-number login entry point for the auth flow.
+ * Modern mobile-number login matching the teal hero + rounded white sheet design.
  * Existing users verify with Firebase OTP and enter Home.
- * New users are sent to Register.
+ * New users route to Register screen.
  */
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavigationProp>();
-  const { width } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(width), [width]);
+  const { width, height } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(width, height), [width, height]);
+
   const [mobileNumber, setMobileNumber] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showValidationState, setShowValidationState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // The phone number is valid only when exactly 10 digits have been entered.
   const isPhoneValid = mobileNumber.length === MAX_PHONE_DIGITS;
 
-  // Sanitise user input so the field accepts only digits and never exceeds 10 numbers.
   const handleMobileChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/\D/g, '').slice(0, MAX_PHONE_DIGITS);
     setMobileNumber(digitsOnly);
     setShowValidationState(digitsOnly.length > 0);
   }, []);
 
-  /**
-   * Continue:
-   * - exists → Firebase OTP → Home
-   * - missing → Register
-   */
   const handleContinue = useCallback(async () => {
     if (!mobileNumber) {
       Alert.alert('Please enter your mobile number');
@@ -123,10 +121,6 @@ export const LoginScreen: React.FC = () => {
     }
   }, [isPhoneValid, mobileNumber, navigation]);
 
-  const handleNeedHelp = useCallback(() => {
-    navigation.navigate('Support');
-  }, [navigation]);
-
   const handleGoogleContinue = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -169,37 +163,45 @@ export const LoginScreen: React.FC = () => {
     }
   }, [navigation]);
 
+  const handleAppleContinue = useCallback(() => {
+    Alert.alert(
+      'Apple Sign-In',
+      Platform.OS === 'ios'
+        ? 'Apple Sign-In is configured for iOS production builds.'
+        : 'Apple Sign-In is only available on iOS devices.',
+    );
+  }, []);
+
   const handleCreateAccount = useCallback(() => {
     navigation.navigate('Register', {
       phoneNumber: mobileNumber || undefined,
     });
   }, [mobileNumber, navigation]);
 
-  const inputStateStyle = useMemo(() => {
-    if (!showValidationState && !isInputFocused) {
-      return undefined;
-    }
+  const handleNeedHelp = useCallback(() => {
+    navigation.navigate('Support');
+  }, [navigation]);
 
-    if (mobileNumber.length > 0 && !isPhoneValid) { 
-      return styles.phoneInputWrapError;
+  const inputWrapStyle = useMemo(() => {
+    if (showValidationState && mobileNumber.length > 0 && !isPhoneValid) {
+      return styles.pillInputWrapError;
     }
-
     if (isInputFocused) {
-      return styles.phoneInputWrapFocused;
+      return styles.pillInputWrapFocused;
     }
-
     return undefined;
   }, [
     isInputFocused,
     isPhoneValid,
     mobileNumber.length,
     showValidationState,
-    styles.phoneInputWrapError,
-    styles.phoneInputWrapFocused,
+    styles.pillInputWrapError,
+    styles.pillInputWrapFocused,
   ]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#14B8A6" translucent />
       <LinearGradient
         colors={[...SCREEN_GRADIENT_COLORS]}
         start={SCREEN_GRADIENT_START}
@@ -213,114 +215,144 @@ export const LoginScreen: React.FC = () => {
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              <View style={styles.container}>
-                {/* Brand and welcome section */}
-                <View style={styles.hero}>
-                  <View
-                    style={styles.logoWrap}
-                    accessibilityRole="image"
-                    accessibilityLabel="RESQGo logo">
-                    <Text style={styles.logoEmoji}>🚗</Text>
+              {/* Top Hero Banner with Headline & Decorative Graphics */}
+              <View style={styles.heroHeader}>
+                <AuthHeroGraphic type="login" />
+                <Text style={styles.heroTitle}>
+                  Log in to stay on{' '}
+                  <Text style={styles.heroTitleHighlight}>top of</Text> your emergency assistance.
+                </Text>
+              </View>
+
+              {/* Bottom White Sheet Container */}
+              <View style={styles.bottomSheet}>
+                {/* Header: Title & Sign Up Link */}
+                <View style={styles.sheetHeader}>
+                  <Text style={styles.sheetTitle}>Login</Text>
+                  <View style={styles.subRow}>
+                    <Text style={styles.subRowText}>Don&apos;t Have An Account?</Text>
+                    <Pressable
+                      onPress={handleCreateAccount}
+                      accessibilityRole="button"
+                      accessibilityLabel="Sign Up">
+                      <Text style={styles.subRowLink}>Sign Up</Text>
+                    </Pressable>
                   </View>
-
-                  <Text style={styles.title} accessibilityRole="header">
-                    Welcome Back
-                  </Text>
-
-                  <Text style={styles.subtitle}>Enter your mobile number to continue.</Text>
                 </View>
 
-                {/* Mobile number form */}
-                <View style={styles.formCard}>
-                  <Text style={styles.label}>Mobile Number</Text>
+                {/* Form Controls */}
+                <View style={styles.formGroup}>
+                  {/* Phone Input Pill */}
+                  <View style={[styles.pillInputWrap, inputWrapStyle]}>
+                    <Ionicons
+                      name="call-outline"
+                      size={20}
+                      color={isInputFocused ? '#0D9488' : '#9CA3AF'}
+                      style={styles.inputIcon}
+                    />
 
-                  <View style={styles.phoneRow}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Country code picker"
-                      style={styles.countryCodeButton}>
+                    {/* Country Code Badge */}
+                    <View style={styles.countryCodeBadge}>
                       <Text style={styles.countryCodeText}>{COUNTRY_CODE}</Text>
-                      <Text style={styles.countryChevron}>▼</Text>
-                    </Pressable>
-
-                    <View style={[styles.phoneInputWrap, inputStateStyle]}>
-                      <TextInput
-                        value={mobileNumber}
-                        onChangeText={handleMobileChange}
-                        onFocus={() => setIsInputFocused(true)}
-                        onBlur={() => {
-                          setIsInputFocused(false);
-                          setShowValidationState(true);
-                        }}
-                        style={styles.phoneInput}
-                        keyboardType="number-pad"
-                        maxLength={MAX_PHONE_DIGITS}
-                        placeholder="Enter mobile number"
-                        placeholderTextColor="#9CA3AF"
-                        returnKeyType="done"
-                        accessibilityLabel="Mobile number input"
-                      />
                     </View>
+
+                    <TextInput
+                      value={mobileNumber}
+                      onChangeText={handleMobileChange}
+                      onFocus={() => setIsInputFocused(true)}
+                      onBlur={() => {
+                        setIsInputFocused(false);
+                        setShowValidationState(true);
+                      }}
+                      style={styles.pillInput}
+                      keyboardType="number-pad"
+                      maxLength={MAX_PHONE_DIGITS}
+                      placeholder="Enter mobile number"
+                      placeholderTextColor="#9CA3AF"
+                      returnKeyType="done"
+                      accessibilityLabel="Mobile number input"
+                    />
                   </View>
 
-                  {mobileNumber.length > 0 && !isPhoneValid ? (
+                  {mobileNumber.length > 0 && !isPhoneValid && (
                     <Text style={styles.errorText}>
                       Please enter a valid 10-digit mobile number.
                     </Text>
-                  ) : (
-                    <Text style={styles.helperText}>Enter your registered mobile number to continue.</Text>
                   )}
 
-                  {/* Primary and secondary authentication actions */}
-                  <View style={styles.actions}>
+                  {/* Options Row: Remember Me & Forgot Password / Need Help */}
+                  <View style={styles.optionsRow}>
                     <Pressable
-                      onPress={handleContinue}
-                      disabled={!isPhoneValid || isLoading}
-                      accessibilityRole="button"
-                      accessibilityLabel="Continue"
-                      style={[
-                        styles.continueButton,
-                        (!isPhoneValid || isLoading) &&
-                          styles.continueButtonDisabled,
-                      ]}>
-                      <LinearGradient
-                        colors={[...CTA_GRADIENT_COLORS]}
-                        start={CTA_GRADIENT_START}
-                        end={CTA_GRADIENT_END}
-                        style={styles.continueGradient}>
-                        <Text style={styles.continueText}>Continue</Text>
-                      </LinearGradient>
+                      onPress={() => setRememberMe(prev => !prev)}
+                      style={styles.rememberMeContainer}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: rememberMe }}>
+                      <View
+                        style={[
+                          styles.checkbox,
+                          rememberMe && styles.checkboxChecked,
+                        ]}>
+                        {rememberMe && (
+                          <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+                        )}
+                      </View>
+                      <Text style={styles.rememberMeText}>Remember Me</Text>
                     </Pressable>
 
-                    <View style={styles.createAccountWrap}>
-                      <Text style={styles.createAccountPrompt}>Don't have an account?</Text>
-                      <Pressable
-                        onPress={handleCreateAccount}
-                        accessibilityRole="button"
-                        accessibilityLabel="Create Account">
-                        <Text style={styles.createAccountLink}>Create Account</Text>
-                      </Pressable>
-                    </View>
-
                     <Pressable
-                      onPress={handleGoogleContinue}
-                      disabled={isLoading}
+                      onPress={handleNeedHelp}
                       accessibilityRole="button"
-                      accessibilityLabel="Continue with Google"
-                      style={styles.googleButton}>
-                      <Text style={styles.googleIcon}>G</Text>
-                      <Text style={styles.googleText}>Continue with Google</Text>
+                      accessibilityLabel="Need Help">
+                      <Text style={styles.forgotPasswordText}>Need Help?</Text>
                     </Pressable>
                   </View>
+
+                  {/* Primary Login / Continue Button */}
+                  <Pressable
+                    onPress={handleContinue}
+                    disabled={!isPhoneValid || isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel="Login"
+                    style={[
+                      styles.primaryButton,
+                      (!isPhoneValid || isLoading) && styles.primaryButtonDisabled,
+                    ]}>
+                    <LinearGradient
+                      colors={[...CTA_GRADIENT_COLORS]}
+                      start={CTA_GRADIENT_START}
+                      end={CTA_GRADIENT_END}
+                      style={styles.primaryGradient}>
+                      <Text style={styles.primaryButtonText}>Login</Text>
+                    </LinearGradient>
+                  </Pressable>
                 </View>
 
-                {/* Footer assistance copy */}
-                <View style={styles.footer}>
+                {/* Or Continue With Divider */}
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>Or Continue With</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                {/* Social Login Options */}
+                <View style={styles.socialRow}>
                   <Pressable
-                    onPress={handleNeedHelp}
+                    onPress={handleAppleContinue}
                     accessibilityRole="button"
-                    accessibilityLabel="Need help">
-                    <Text style={styles.helpText}>Need Help?</Text>
+                    accessibilityLabel="Continue with Apple"
+                    style={[styles.socialButton, styles.appleButton]}>
+                    <Ionicons name="logo-apple" size={18} color="#FFFFFF" />
+                    <Text style={styles.appleButtonText}>Apple</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={handleGoogleContinue}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel="Continue with Google"
+                    style={[styles.socialButton, styles.googleButton]}>
+                    <Ionicons name="logo-google" size={17} color="#EA4335" />
+                    <Text style={styles.googleButtonText}>Google</Text>
                   </Pressable>
                 </View>
               </View>

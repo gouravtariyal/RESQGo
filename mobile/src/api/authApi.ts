@@ -12,17 +12,17 @@ import type {
  * Low-level auth API calls.
  * Screens should use authService instead of calling these directly.
  */
-export const checkUser = async (payload: CheckUserPayload) => {
-  const { data } = await api.post('/auth/check-user', payload);
+export const checkUser = async (payload: CheckUserPayload): Promise<CheckUserResponse> => {
+  const { data } = await api.post<CheckUserResponse>('/auth/check-user', payload);
   return data;
 };
 
-export const register = async (payload: RegisterPayload) => {
-  const { data } = await api.post('/auth/register', payload);
+export const register = async (payload: RegisterPayload): Promise<RegisterResponse> => {
+  const { data } = await api.post<RegisterResponse>('/auth/register', payload);
   return data;
 };
 
-export const login = async (payload: LoginPayload) => {
-  const { data } = await api.post('/auth/login', payload);
+export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
+  const { data } = await api.post<LoginResponse>('/auth/login', payload);
   return data;
 };

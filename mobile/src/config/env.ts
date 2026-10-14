@@ -1,9 +1,4 @@
 import { Platform } from 'react-native';
-
-/**
- * When testing on a physical device, set this to your dev machine's LAN IP
- * (same Wi‑Fi). Leave empty for Android emulator (10.0.2.2) or iOS simulator (localhost).
- */
 const DEV_MACHINE_LAN_IP = '';
 
 const defaultHost = Platform.select({

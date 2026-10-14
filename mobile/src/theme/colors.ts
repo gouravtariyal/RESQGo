@@ -14,6 +14,12 @@ export const palette = {
   gray900: '#111827',
   gray500: '#6B7280',
   gray200: '#E5E7EB',
+  teal400: '#2DD4BF',
+  teal500: '#14B8A6',
+  teal600: '#0D9488',
+  teal700: '#0F766E',
+  teal800: '#115E59',
+  teal50: '#F0FDFA',
   transparent: 'transparent',
 } as const;
 
@@ -36,6 +42,12 @@ export const colors = {
   /** Inverted text on primary / secondary fills */
   textOnPrimary: palette.white,
   textOnSecondary: palette.white,
+
+  /** Teal brand tokens matching the new mobile UI */
+  brandTeal: palette.teal600,
+  brandTealLight: palette.teal500,
+  brandTealDark: palette.teal700,
+  brandTealBackground: palette.teal50,
 
   /** Disabled / muted helpers */
   disabled: palette.gray200,

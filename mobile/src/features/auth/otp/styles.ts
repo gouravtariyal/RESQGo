@@ -1,24 +1,18 @@
 import { StyleSheet } from 'react-native';
 
-import { colors } from '../../../theme/colors';
+import { colors, palette } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { shadows } from '../../../theme/shadows';
 import { spacing } from '../../../theme/spacing';
 import { fontSizes, fontWeights, typography } from '../../../theme/typography';
 
-/**
- * Deeper brand blue used to enrich premium gradients.
- * This stays local to the OTP feature until the shared palette expands.
- */
-const BRAND_PRIMARY_DEEP = '#1D4ED8';
-
 const BASE_WIDTH = 375;
 const OTP_BOX_SIZE = 52;
 
-/** Premium primary button gradient. */
-export const CTA_GRADIENT_COLORS = [colors.primary, BRAND_PRIMARY_DEEP, colors.secondary] as const;
-export const CTA_GRADIENT_START = { x: 0.05, y: 0 };
-export const CTA_GRADIENT_END = { x: 0.95, y: 1 };
+/** Premium teal primary button gradient. */
+export const CTA_GRADIENT_COLORS = [palette.teal500, palette.teal600, palette.teal700] as const;
+export const CTA_GRADIENT_START = { x: 0, y: 0 };
+export const CTA_GRADIENT_END = { x: 1, y: 1 };
 
 /** Soft branded background wash. */
 export const SCREEN_GRADIENT_COLORS = [colors.background, '#EEF2FF', colors.background] as const;
