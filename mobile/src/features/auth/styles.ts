@@ -41,12 +41,26 @@ export const createStyles = (width: number, height: number) => {
       justifyContent: 'space-between',
     },
 
+    headerRow: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      zIndex: 10,
+    },
+    backButton: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: 'rgba(255, 255, 255, 0.22)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
     // --- Top Hero Banner ---
     heroHeader: {
       minHeight: heroMinHeight,
       paddingHorizontal: spacing['2xl'],
-      paddingTop: spacing.xl,
-      paddingBottom: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.md,
       justifyContent: 'center',
       position: 'relative',
     },
@@ -100,6 +114,35 @@ export const createStyles = (width: number, height: number) => {
       fontWeight: fontWeights.bold,
     },
 
+    // Tab selector between OTP and Password login
+    tabRow: {
+      flexDirection: 'row',
+      backgroundColor: '#F3F4F6',
+      borderRadius: radius.full,
+      padding: 3,
+      marginBottom: spacing.md,
+    },
+    tabButton: {
+      flex: 1,
+      paddingVertical: spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.full,
+    },
+    tabButtonActive: {
+      backgroundColor: '#FFFFFF',
+      ...shadows.sm,
+    },
+    tabText: {
+      fontSize: Math.round(13 * scale),
+      color: colors.textSecondary,
+      fontWeight: fontWeights.medium,
+    },
+    tabTextActive: {
+      color: palette.teal700,
+      fontWeight: fontWeights.bold,
+    },
+
     // --- Form Controls ---
     formGroup: {
       gap: spacing.md,
@@ -133,6 +176,9 @@ export const createStyles = (width: number, height: number) => {
       fontSize: Math.round(14 * scale),
       color: colors.textPrimary,
       paddingVertical: 0,
+    },
+    eyeIconButton: {
+      padding: spacing.xs,
     },
 
     // Country code badge inside pill

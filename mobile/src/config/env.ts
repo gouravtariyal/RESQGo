@@ -1,5 +1,11 @@
 import { Platform } from 'react-native';
-const DEV_MACHINE_LAN_IP = '';
+
+/**
+ * For physical devices on the same Wi-Fi network, use your machine's LAN IP.
+ * For deployed production backends, set PRODUCTION_API_URL (e.g., https://api.resqgo.com/api).
+ */
+const PRODUCTION_API_URL = ''; // e.g. 'https://your-production-backend.com/api'
+const DEV_MACHINE_LAN_IP = '192.168.0.161';
 
 const defaultHost = Platform.select({
   android: '10.0.2.2',
@@ -9,9 +15,9 @@ const defaultHost = Platform.select({
 
 export const API_HOST = DEV_MACHINE_LAN_IP.trim() || defaultHost;
 
-export const API_BASE_URL = `http://${'192.168.0.164'}:5000`;
+export const API_BASE_URL = `http://${API_HOST}:5000`;
 
-export const API_URL = `${API_BASE_URL}/api`;
+export const API_URL = PRODUCTION_API_URL.trim() || `${API_BASE_URL}/api`;
 
 /**
  * Web client ID from Firebase Console → Project settings → Your apps → Web app,

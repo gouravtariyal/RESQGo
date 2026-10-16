@@ -25,8 +25,15 @@ export const SCREEN_GRADIENT_END = { x: 1, y: 1 };
  */
 export const createStyles = (width: number) => {
   const scale = Math.min(Math.max(width / BASE_WIDTH, 0.9), 1.1);
-  const horizontalPadding = Math.max(spacing['2xl'], Math.round(width * 0.07));
-  const otpBoxSize = Math.round(OTP_BOX_SIZE * scale);
+  const scrollPaddingHorizontal = Math.max(spacing.lg, Math.round(width * 0.05));
+  const cardPaddingHorizontal = Math.max(spacing.sm, Math.round(width * 0.03));
+
+  // Available width strictly inside the form card
+  const innerCardWidth = width - scrollPaddingHorizontal * 2 - cardPaddingHorizontal * 2;
+  const boxGap = Math.max(5, Math.min(8, Math.floor(innerCardWidth * 0.025)));
+  const calculatedWidth = Math.floor((innerCardWidth - boxGap * 5) / 6);
+  const otpBoxWidth = Math.min(48, Math.max(38, calculatedWidth));
+  const otpBoxHeight = Math.round(otpBoxWidth * 1.18);
 
   return StyleSheet.create({
     safeArea: {
@@ -41,8 +48,8 @@ export const createStyles = (width: number) => {
     },
     scrollContent: {
       flexGrow: 1,
-      paddingHorizontal: horizontalPadding,
-      paddingTop: spacing['2xl'],
+      paddingHorizontal: scrollPaddingHorizontal,
+      paddingTop: spacing.xl,
       paddingBottom: spacing['2xl'],
     },
     container: {
@@ -117,27 +124,29 @@ export const createStyles = (width: number) => {
       borderWidth: 1,
       borderColor: colors.border,
       paddingVertical: spacing.xl,
-      paddingHorizontal: spacing.lg,
+      paddingHorizontal: cardPaddingHorizontal,
       ...shadows.sm,
     },
     otpRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: spacing.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: boxGap,
     },
     otpBox: {
-      width: otpBoxSize,
-      height: otpBoxSize,
-      borderRadius: radius.xl,
-      borderWidth: 1,
+      width: otpBoxWidth,
+      height: otpBoxHeight,
+      borderRadius: radius.lg,
+      borderWidth: 1.5,
       borderColor: colors.border,
       backgroundColor: colors.background,
       textAlign: 'center',
       color: colors.textPrimary,
       ...typography.h3,
-      fontSize: Math.round(fontSizes.xl * scale),
+      fontSize: Math.round(18 * scale),
       fontWeight: fontWeights.semibold,
       paddingVertical: 0,
+      paddingHorizontal: 0,
     },
     otpBoxFocused: {
       borderColor: colors.primary,

@@ -42,6 +42,7 @@ export const OnboardingScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(width, height), [width, height]);
 
   const goToLogin = useCallback(() => navigation.navigate('Login'), [navigation]);
+  const goToRegister = useCallback(() => navigation.navigate('Register'), [navigation]);
 
   return (
     <View style={styles.container}>
@@ -102,7 +103,7 @@ export const OnboardingScreen: React.FC = () => {
               {/* Call to action buttons */}
               <View style={styles.ctaContainer}>
                 <Pressable
-                  onPress={goToLogin}
+                  onPress={goToRegister}
                   accessibilityRole="button"
                   accessibilityLabel="Get Started"
                   style={styles.ctaPressable}>

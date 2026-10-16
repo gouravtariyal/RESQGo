@@ -48,12 +48,13 @@ type RegisterRouteProp = RouteProp<AuthStackParamList, 'Register'>;
 
 const MAX_PHONE_DIGITS = 10;
 const COUNTRY_CODE = '+91';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * RegisterScreen
  * --------------
  * Modern account creation screen matching the teal hero + rounded white sheet design.
- * Collects name, phone, email, and password to register a new RESQGo account.
+ * Collects name, phone, optional email, password, and confirm password to register a new RESQGo account.
  */
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<RegisterNavigationProp>();
@@ -65,17 +66,32 @@ export const RegisterScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState(route.params?.phoneNumber ?? '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
 
+  const isNameValid = fullName.trim().length >= 2;
   const isPhoneValid = phoneNumber.length === MAX_PHONE_DIGITS;
+  const isEmailValid = email.trim().length === 0 || EMAIL_REGEX.test(email.trim());
+  const isPasswordValid = password.length >= 6;
+  const isConfirmPasswordValid =
+    confirmPassword.length >= 6 && confirmPassword === password;
+
   const isFormValid =
-    fullName.trim().length > 0 &&
+    isNameValid &&
     isPhoneValid &&
-    password.trim().length >= 6 &&
+    isEmailValid &&
+    isPasswordValid &&
+    isConfirmPasswordValid &&
     acceptedTerms;
+
+  const markTouched = useCallback((fieldName: string) => {
+    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
+  }, []);
 
   const handlePhoneChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/\D/g, '').slice(0, MAX_PHONE_DIGITS);
@@ -83,8 +99,18 @@ export const RegisterScreen: React.FC = () => {
   }, []);
 
   const handleRegister = useCallback(async () => {
-    if (!fullName.trim()) {
-      Alert.alert('Required Field', 'Please enter your full name.');
+    // Mark all fields as touched for validation visibility
+    setTouchedFields({
+      fullName: true,
+      phoneNumber: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+      terms: true,
+    });
+
+    if (!fullName.trim() || fullName.trim().length < 2) {
+      Alert.alert('Required Field', 'Please enter your full name (at least 2 characters).');
       return;
     }
 
@@ -93,40 +119,103 @@ export const RegisterScreen: React.FC = () => {
       return;
     }
 
-    if (password.trim().length < 6) {
-      Alert.alert('Password Too Short', 'Password must be at least 6 characters.');
+    if (!isEmailValid) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address or leave it blank.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Password Too Short', 'Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Passwords Do Not Match', 'Please ensure your passwords match.');
       return;
     }
 
     if (!acceptedTerms) {
-      Alert.alert('Terms & Privacy', 'Please agree to the Terms of Service and Privacy Policy to continue.');
+      Alert.alert(
+        'Terms & Privacy',
+        'Please agree to the Terms of Service and Privacy Policy to continue.',
+      );
       return;
     }
 
     try {
       setIsLoading(true);
-      await register({
+      const response = await register({
         fullName: fullName.trim(),
         phoneNumber,
         password: password.trim(),
         email: email.trim() || undefined,
       });
 
-      Alert.alert('Account created', 'You can now log in with your account.', [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('Login'),
-        },
-      ]);
+      if (response?.token) {
+        Alert.alert(
+          'Account Created! 🎉',
+          'Welcome to RESQGo! Your account has been registered successfully.',
+          [
+            {
+              text: 'Get Started',
+              onPress: () => {
+                const rootNavigation =
+                  navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+                if (rootNavigation) {
+                  navigateToAppHome(rootNavigation);
+                  return;
+                }
+                navigation.navigate('Login', { phoneNumber });
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert(
+          'Account Created',
+          'Your account has been registered. You can now log in.',
+          [
+            {
+              text: 'Log In',
+              onPress: () => navigation.navigate('Login', { phoneNumber }),
+            },
+          ],
+        );
+      }
     } catch (error) {
-      Alert.alert(
-        'Registration failed',
-        error instanceof Error ? error.message : 'Please try again.',
-      );
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      if (message.toLowerCase().includes('already exists')) {
+        Alert.alert(
+          'Account Exists',
+          'An account with this mobile number already exists. Please log in instead.',
+          [
+            {
+              text: 'Log In',
+              onPress: () => navigation.navigate('Login', { phoneNumber }),
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+          ],
+        );
+      } else {
+        Alert.alert('Registration Failed', message);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [acceptedTerms, email, fullName, isPhoneValid, navigation, password, phoneNumber]);
+  }, [
+    acceptedTerms,
+    confirmPassword,
+    email,
+    fullName,
+    isEmailValid,
+    isPhoneValid,
+    navigation,
+    password,
+    phoneNumber,
+  ]);
 
   const handleGoogleContinue = useCallback(async () => {
     try {
@@ -188,6 +277,17 @@ export const RegisterScreen: React.FC = () => {
         end={SCREEN_GRADIENT_END}
         style={styles.gradient}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+          {/* Top navigation back button */}
+          <View style={styles.headerRow}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={styles.backButton}>
+              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+            </Pressable>
+          </View>
+
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardView}>
@@ -207,11 +307,11 @@ export const RegisterScreen: React.FC = () => {
               <View style={styles.bottomSheet}>
                 {/* Header: Title & Log in Link */}
                 <View style={styles.sheetHeader}>
-                  <Text style={styles.sheetTitle}>Sign up</Text>
+                  <Text style={styles.sheetTitle}>Create Account</Text>
                   <View style={styles.subRow}>
                     <Text style={styles.subRowText}>Already Have An Account?</Text>
                     <Pressable
-                      onPress={() => navigation.navigate('Login')}
+                      onPress={() => navigation.navigate('Login', { phoneNumber: phoneNumber || undefined })}
                       accessibilityRole="button"
                       accessibilityLabel="Log in">
                       <Text style={styles.subRowLink}>Log in</Text>
@@ -226,35 +326,56 @@ export const RegisterScreen: React.FC = () => {
                     style={[
                       styles.pillInputWrap,
                       focusedField === 'fullName' && styles.pillInputWrapFocused,
+                      touchedFields.fullName && !isNameValid && styles.pillInputWrapError,
                     ]}>
                     <Ionicons
                       name="person-outline"
                       size={19}
-                      color={focusedField === 'fullName' ? '#0D9488' : '#9CA3AF'}
+                      color={
+                        touchedFields.fullName && !isNameValid
+                          ? '#EF4444'
+                          : focusedField === 'fullName'
+                          ? '#0D9488'
+                          : '#9CA3AF'
+                      }
                       style={styles.inputIcon}
                     />
                     <TextInput
                       value={fullName}
                       onChangeText={setFullName}
                       onFocus={() => setFocusedField('fullName')}
-                      onBlur={() => setFocusedField(null)}
+                      onBlur={() => {
+                        setFocusedField(null);
+                        markTouched('fullName');
+                      }}
                       style={styles.pillInput}
                       placeholder="Enter your full name"
                       placeholderTextColor="#9CA3AF"
+                      autoCapitalize="words"
                       accessibilityLabel="Full name input"
                     />
                   </View>
+                  {touchedFields.fullName && !isNameValid && (
+                    <Text style={styles.fieldErrorText}>Full name must be at least 2 characters.</Text>
+                  )}
 
                   {/* Phone Number Pill Input */}
                   <View
                     style={[
                       styles.pillInputWrap,
                       focusedField === 'phone' && styles.pillInputWrapFocused,
+                      touchedFields.phoneNumber && !isPhoneValid && styles.pillInputWrapError,
                     ]}>
                     <Ionicons
                       name="call-outline"
                       size={19}
-                      color={focusedField === 'phone' ? '#0D9488' : '#9CA3AF'}
+                      color={
+                        touchedFields.phoneNumber && !isPhoneValid
+                          ? '#EF4444'
+                          : focusedField === 'phone'
+                          ? '#0D9488'
+                          : '#9CA3AF'
+                      }
                       style={styles.inputIcon}
                     />
                     <View style={styles.countryCodeBadge}>
@@ -264,7 +385,10 @@ export const RegisterScreen: React.FC = () => {
                       value={phoneNumber}
                       onChangeText={handlePhoneChange}
                       onFocus={() => setFocusedField('phone')}
-                      onBlur={() => setFocusedField(null)}
+                      onBlur={() => {
+                        setFocusedField(null);
+                        markTouched('phoneNumber');
+                      }}
                       style={styles.pillInput}
                       keyboardType="number-pad"
                       maxLength={MAX_PHONE_DIGITS}
@@ -273,24 +397,37 @@ export const RegisterScreen: React.FC = () => {
                       accessibilityLabel="Mobile number input"
                     />
                   </View>
+                  {touchedFields.phoneNumber && !isPhoneValid && (
+                    <Text style={styles.fieldErrorText}>Please enter a valid 10-digit mobile number.</Text>
+                  )}
 
                   {/* Email Pill Input (Optional) */}
                   <View
                     style={[
                       styles.pillInputWrap,
                       focusedField === 'email' && styles.pillInputWrapFocused,
+                      touchedFields.email && !isEmailValid && styles.pillInputWrapError,
                     ]}>
                     <Ionicons
                       name="mail-outline"
                       size={19}
-                      color={focusedField === 'email' ? '#0D9488' : '#9CA3AF'}
+                      color={
+                        touchedFields.email && !isEmailValid
+                          ? '#EF4444'
+                          : focusedField === 'email'
+                          ? '#0D9488'
+                          : '#9CA3AF'
+                      }
                       style={styles.inputIcon}
                     />
                     <TextInput
                       value={email}
                       onChangeText={setEmail}
                       onFocus={() => setFocusedField('email')}
-                      onBlur={() => setFocusedField(null)}
+                      onBlur={() => {
+                        setFocusedField(null);
+                        markTouched('email');
+                      }}
                       style={styles.pillInput}
                       keyboardType="email-address"
                       autoCapitalize="none"
@@ -299,27 +436,40 @@ export const RegisterScreen: React.FC = () => {
                       accessibilityLabel="Email input"
                     />
                   </View>
+                  {touchedFields.email && !isEmailValid && (
+                    <Text style={styles.fieldErrorText}>Please provide a valid email address.</Text>
+                  )}
 
                   {/* Password Pill Input */}
                   <View
                     style={[
                       styles.pillInputWrap,
                       focusedField === 'password' && styles.pillInputWrapFocused,
+                      touchedFields.password && !isPasswordValid && styles.pillInputWrapError,
                     ]}>
                     <Ionicons
                       name="lock-closed-outline"
                       size={19}
-                      color={focusedField === 'password' ? '#0D9488' : '#9CA3AF'}
+                      color={
+                        touchedFields.password && !isPasswordValid
+                          ? '#EF4444'
+                          : focusedField === 'password'
+                          ? '#0D9488'
+                          : '#9CA3AF'
+                      }
                       style={styles.inputIcon}
                     />
                     <TextInput
                       value={password}
                       onChangeText={setPassword}
                       onFocus={() => setFocusedField('password')}
-                      onBlur={() => setFocusedField(null)}
+                      onBlur={() => {
+                        setFocusedField(null);
+                        markTouched('password');
+                      }}
                       style={styles.pillInput}
                       secureTextEntry={!showPassword}
-                      placeholder="Create a password"
+                      placeholder="Create a password (min 6 chars)"
                       placeholderTextColor="#9CA3AF"
                       accessibilityLabel="Password input"
                     />
@@ -335,6 +485,62 @@ export const RegisterScreen: React.FC = () => {
                       />
                     </Pressable>
                   </View>
+                  {touchedFields.password && !isPasswordValid && (
+                    <Text style={styles.fieldErrorText}>Password must be at least 6 characters.</Text>
+                  )}
+
+                  {/* Confirm Password Pill Input */}
+                  <View
+                    style={[
+                      styles.pillInputWrap,
+                      focusedField === 'confirmPassword' && styles.pillInputWrapFocused,
+                      touchedFields.confirmPassword && !isConfirmPasswordValid && styles.pillInputWrapError,
+                    ]}>
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={19}
+                      color={
+                        touchedFields.confirmPassword && !isConfirmPasswordValid
+                          ? '#EF4444'
+                          : focusedField === 'confirmPassword'
+                          ? '#0D9488'
+                          : '#9CA3AF'
+                      }
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      onFocus={() => setFocusedField('confirmPassword')}
+                      onBlur={() => {
+                        setFocusedField(null);
+                        markTouched('confirmPassword');
+                      }}
+                      style={styles.pillInput}
+                      secureTextEntry={!showConfirmPassword}
+                      placeholder="Confirm your password"
+                      placeholderTextColor="#9CA3AF"
+                      accessibilityLabel="Confirm password input"
+                    />
+                    <Pressable
+                      onPress={() => setShowConfirmPassword(prev => !prev)}
+                      style={styles.eyeIconButton}
+                      accessibilityRole="button"
+                      accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                      <Ionicons
+                        name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={19}
+                        color="#9CA3AF"
+                      />
+                    </Pressable>
+                  </View>
+                  {touchedFields.confirmPassword && !isConfirmPasswordValid && (
+                    <Text style={styles.fieldErrorText}>
+                      {confirmPassword.length === 0
+                        ? 'Please confirm your password.'
+                        : 'Passwords do not match.'}
+                    </Text>
+                  )}
 
                   {/* Terms & Privacy Agreement */}
                   <Pressable
@@ -375,7 +581,7 @@ export const RegisterScreen: React.FC = () => {
                     onPress={handleRegister}
                     disabled={!isFormValid || isLoading}
                     accessibilityRole="button"
-                    accessibilityLabel="Sign up"
+                    accessibilityLabel="Register Account"
                     style={[
                       styles.primaryButton,
                       (!isFormValid || isLoading) && styles.primaryButtonDisabled,
@@ -385,7 +591,9 @@ export const RegisterScreen: React.FC = () => {
                       start={CTA_GRADIENT_START}
                       end={CTA_GRADIENT_END}
                       style={styles.primaryGradient}>
-                      <Text style={styles.primaryButtonText}>Sign up</Text>
+                      <Text style={styles.primaryButtonText}>
+                        {isLoading ? 'Creating Account...' : 'Register Account'}
+                      </Text>
                     </LinearGradient>
                   </Pressable>
                 </View>

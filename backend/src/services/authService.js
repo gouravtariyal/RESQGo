@@ -45,7 +45,14 @@ const registerUser = async ({ fullName, phoneNumber, email, password }) => {
     password: hashedPassword,
   });
 
-  return toPublicUser(user);
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: '7d',
+  });
+
+  return {
+    user: toPublicUser(user),
+    token,
+  };
 };
 
 /**

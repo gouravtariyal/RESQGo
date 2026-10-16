@@ -41,11 +41,25 @@ export const createStyles = (width: number, height: number) => {
       justifyContent: 'space-between',
     },
 
+    headerRow: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      zIndex: 10,
+    },
+    backButton: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: 'rgba(255, 255, 255, 0.22)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
     // --- Top Hero Banner ---
     heroHeader: {
       minHeight: heroMinHeight,
       paddingHorizontal: spacing['2xl'],
-      paddingTop: spacing.xl,
+      paddingTop: spacing.sm,
       paddingBottom: spacing.md,
       justifyContent: 'center',
       position: 'relative',
@@ -55,7 +69,7 @@ export const createStyles = (width: number, height: number) => {
       lineHeight: Math.round(30 * scale),
       fontWeight: fontWeights.bold,
       color: '#FFFFFF',
-      maxWidth: '80%',
+      maxWidth: '85%',
       letterSpacing: -0.3,
     },
 
@@ -116,6 +130,16 @@ export const createStyles = (width: number, height: number) => {
     pillInputWrapFocused: {
       borderColor: palette.teal600,
       backgroundColor: '#FFFFFF',
+    },
+    pillInputWrapError: {
+      borderColor: '#EF4444',
+      backgroundColor: '#FEF2F2',
+    },
+    fieldErrorText: {
+      fontSize: 12,
+      color: '#DC2626',
+      marginLeft: spacing.lg,
+      marginTop: -spacing.xs + 2,
     },
     inputIcon: {
       marginRight: spacing.sm,

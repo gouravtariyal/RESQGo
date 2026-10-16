@@ -21,11 +21,12 @@ const register = async (req, res, next) => {
       });
     }
 
-    const user = await authService.registerUser(values);
+    const { user, token } = await authService.registerUser(values);
 
     return res.status(201).json({
       success: true,
       message: 'Account created successfully.',
+      token,
       user,
     });
   } catch (error) {

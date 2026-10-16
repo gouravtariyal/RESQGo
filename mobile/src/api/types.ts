@@ -29,6 +29,7 @@ export type CheckUserResponse = ApiSuccessResponse<{
 
 export type RegisterResponse = ApiSuccessResponse<{
   user: ApiUser;
+  token?: string;
 }>;
 
 export type LoginResponse = ApiSuccessResponse<{

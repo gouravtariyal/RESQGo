@@ -34,7 +34,13 @@ export const checkUser = async (payload: CheckUserPayload) => {
 
 export const register = async (payload: RegisterPayload) => {
   try {
-    return await authApi.register(payload);
+    const response = await authApi.register(payload);
+
+    if (response?.token && response?.user) {
+      await persistAuthSession(response.token, response.user);
+    }
+
+    return response;
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'Registration failed.'));
   }

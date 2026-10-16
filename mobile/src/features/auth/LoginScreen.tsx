@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,8 +11,9 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -23,7 +24,7 @@ import type {
   AuthStackParamList,
   RootStackParamList,
 } from '../../navigation/types';
-import { checkUser } from '../../services/authService';
+import { checkUser, login } from '../../services/authService';
 import {
   GoogleSignInCancelledError,
   signInWithGoogle,
@@ -42,6 +43,7 @@ import {
 } from './styles';
 
 type LoginNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+type LoginRouteProp = RouteProp<AuthStackParamList, 'Login'>;
 
 const MAX_PHONE_DIGITS = 10;
 const COUNTRY_CODE = '+91';
@@ -49,22 +51,35 @@ const COUNTRY_CODE = '+91';
 /**
  * LoginScreen
  * -----------
- * Modern mobile-number login matching the teal hero + rounded white sheet design.
- * Existing users verify with Firebase OTP and enter Home.
- * New users route to Register screen.
+ * Modern mobile login matching the teal hero + rounded white sheet design.
+ * Supports both Phone OTP login and Password login for registered users.
+ * Routes new users seamlessly to Register screen.
  */
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavigationProp>();
+  const route = useRoute<LoginRouteProp>();
   const { width, height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(width, height), [width, height]);
 
-  const [mobileNumber, setMobileNumber] = useState('');
+  const [loginMode, setLoginMode] = useState<'otp' | 'password'>('otp');
+  const [mobileNumber, setMobileNumber] = useState(route.params?.phoneNumber ?? '');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState<string | null>(null);
   const [showValidationState, setShowValidationState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (route.params?.phoneNumber) {
+      setMobileNumber(route.params.phoneNumber);
+      setShowValidationState(true);
+    }
+  }, [route.params?.phoneNumber]);
+
   const isPhoneValid = mobileNumber.length === MAX_PHONE_DIGITS;
+  const isPasswordValid = password.length >= 6;
+  const isFormValid = loginMode === 'otp' ? isPhoneValid : isPhoneValid && isPasswordValid;
 
   const handleMobileChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/\D/g, '').slice(0, MAX_PHONE_DIGITS);
@@ -85,12 +100,73 @@ export const LoginScreen: React.FC = () => {
       return;
     }
 
+    if (loginMode === 'password') {
+      if (!password || password.length < 6) {
+        Alert.alert('Please enter your password (at least 6 characters)');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        await login({
+          phoneNumber: mobileNumber,
+          password: password.trim(),
+        });
+
+        const rootNavigation =
+          navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+
+        if (rootNavigation) {
+          navigateToAppHome(rootNavigation);
+          return;
+        }
+
+        navigation
+          .getParent()
+          ?.getParent<NativeStackNavigationProp<RootStackParamList>>()
+          ?.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'App',
+                params: {
+                  screen: 'MainTabs',
+                  params: { screen: 'Home' },
+                },
+              },
+            ],
+          });
+      } catch (error) {
+        Alert.alert(
+          'Login failed',
+          error instanceof Error ? error.message : 'Invalid credentials. Please try again.',
+        );
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // OTP mode
     try {
       setIsLoading(true);
       const response = await checkUser({ phoneNumber: mobileNumber });
 
       if (!response.exists) {
-        navigation.navigate('Register', { phoneNumber: mobileNumber });
+        Alert.alert(
+          'Account Not Found',
+          'No account was found with this mobile number. Would you like to create one?',
+          [
+            {
+              text: 'Register',
+              onPress: () => navigation.navigate('Register', { phoneNumber: mobileNumber }),
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+          ],
+        );
         return;
       }
 
@@ -119,7 +195,7 @@ export const LoginScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isPhoneValid, mobileNumber, navigation]);
+  }, [isPhoneValid, loginMode, mobileNumber, navigation, password]);
 
   const handleGoogleContinue = useCallback(async () => {
     try {
@@ -182,11 +258,11 @@ export const LoginScreen: React.FC = () => {
     navigation.navigate('Support');
   }, [navigation]);
 
-  const inputWrapStyle = useMemo(() => {
+  const phoneInputWrapStyle = useMemo(() => {
     if (showValidationState && mobileNumber.length > 0 && !isPhoneValid) {
       return styles.pillInputWrapError;
     }
-    if (isInputFocused) {
+    if (isInputFocused === 'phone') {
       return styles.pillInputWrapFocused;
     }
     return undefined;
@@ -208,6 +284,17 @@ export const LoginScreen: React.FC = () => {
         end={SCREEN_GRADIENT_END}
         style={styles.gradient}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+          {/* Top navigation back button */}
+          <View style={styles.headerRow}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={styles.backButton}>
+              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+            </Pressable>
+          </View>
+
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardView}>
@@ -240,14 +327,32 @@ export const LoginScreen: React.FC = () => {
                   </View>
                 </View>
 
+                {/* Login Method Tab Selector */}
+                <View style={styles.tabRow}>
+                  <Pressable
+                    onPress={() => setLoginMode('otp')}
+                    style={[styles.tabButton, loginMode === 'otp' && styles.tabButtonActive]}>
+                    <Text style={[styles.tabText, loginMode === 'otp' && styles.tabTextActive]}>
+                      OTP Login
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setLoginMode('password')}
+                    style={[styles.tabButton, loginMode === 'password' && styles.tabButtonActive]}>
+                    <Text style={[styles.tabText, loginMode === 'password' && styles.tabTextActive]}>
+                      Password Login
+                    </Text>
+                  </Pressable>
+                </View>
+
                 {/* Form Controls */}
                 <View style={styles.formGroup}>
                   {/* Phone Input Pill */}
-                  <View style={[styles.pillInputWrap, inputWrapStyle]}>
+                  <View style={[styles.pillInputWrap, phoneInputWrapStyle]}>
                     <Ionicons
                       name="call-outline"
                       size={20}
-                      color={isInputFocused ? '#0D9488' : '#9CA3AF'}
+                      color={isInputFocused === 'phone' ? '#0D9488' : '#9CA3AF'}
                       style={styles.inputIcon}
                     />
 
@@ -259,9 +364,9 @@ export const LoginScreen: React.FC = () => {
                     <TextInput
                       value={mobileNumber}
                       onChangeText={handleMobileChange}
-                      onFocus={() => setIsInputFocused(true)}
+                      onFocus={() => setIsInputFocused('phone')}
                       onBlur={() => {
-                        setIsInputFocused(false);
+                        setIsInputFocused(null);
                         setShowValidationState(true);
                       }}
                       style={styles.pillInput}
@@ -278,6 +383,44 @@ export const LoginScreen: React.FC = () => {
                     <Text style={styles.errorText}>
                       Please enter a valid 10-digit mobile number.
                     </Text>
+                  )}
+
+                  {/* Password Pill Input (shown when loginMode === 'password') */}
+                  {loginMode === 'password' && (
+                    <View
+                      style={[
+                        styles.pillInputWrap,
+                        isInputFocused === 'password' && styles.pillInputWrapFocused,
+                      ]}>
+                      <Ionicons
+                        name="lock-closed-outline"
+                        size={20}
+                        color={isInputFocused === 'password' ? '#0D9488' : '#9CA3AF'}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        value={password}
+                        onChangeText={setPassword}
+                        onFocus={() => setIsInputFocused('password')}
+                        onBlur={() => setIsInputFocused(null)}
+                        style={styles.pillInput}
+                        secureTextEntry={!showPassword}
+                        placeholder="Enter your password"
+                        placeholderTextColor="#9CA3AF"
+                        accessibilityLabel="Password input"
+                      />
+                      <Pressable
+                        onPress={() => setShowPassword(prev => !prev)}
+                        style={styles.eyeIconButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                        <Ionicons
+                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={19}
+                          color="#9CA3AF"
+                        />
+                      </Pressable>
+                    </View>
                   )}
 
                   {/* Options Row: Remember Me & Forgot Password / Need Help */}
@@ -310,19 +453,25 @@ export const LoginScreen: React.FC = () => {
                   {/* Primary Login / Continue Button */}
                   <Pressable
                     onPress={handleContinue}
-                    disabled={!isPhoneValid || isLoading}
+                    disabled={!isFormValid || isLoading}
                     accessibilityRole="button"
-                    accessibilityLabel="Login"
+                    accessibilityLabel={loginMode === 'password' ? 'Login with Password' : 'Send OTP'}
                     style={[
                       styles.primaryButton,
-                      (!isPhoneValid || isLoading) && styles.primaryButtonDisabled,
+                      (!isFormValid || isLoading) && styles.primaryButtonDisabled,
                     ]}>
                     <LinearGradient
                       colors={[...CTA_GRADIENT_COLORS]}
                       start={CTA_GRADIENT_START}
                       end={CTA_GRADIENT_END}
                       style={styles.primaryGradient}>
-                      <Text style={styles.primaryButtonText}>Login</Text>
+                      <Text style={styles.primaryButtonText}>
+                        {isLoading
+                          ? 'Please wait...'
+                          : loginMode === 'password'
+                          ? 'Login'
+                          : 'Continue with OTP'}
+                      </Text>
                     </LinearGradient>
                   </Pressable>
                 </View>
