@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import type { AuthStackParamList, RootStackParamList } from '../../../navigation/types';
 import { handlePhoneAuthError } from '../../../services/firebase/phoneAuthErrors';
@@ -254,7 +255,7 @@ export const OtpScreen: React.FC = () => {
                   accessibilityRole="button"
                   accessibilityLabel="Go back"
                   style={styles.backButton}>
-                  <Text style={styles.backButtonText}>{'<'}</Text>
+                  <Ionicons name="arrow-back" size={20} color="#0D9488" />
                 </Pressable>
               </View>
 

@@ -20,6 +20,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { LoadingOverlay } from '../../components/loaders/LoadingOverlay';
 import { AuthHeroGraphic } from '../../components/common/AuthHeroGraphic';
+import { ServerConfigModal } from '../../components/common/ServerConfigModal';
+import { getCurrentServerUrlSync } from '../../config/serverConfig';
 import type {
   AuthStackParamList,
   RootStackParamList,
@@ -69,6 +71,21 @@ export const LoginScreen: React.FC = () => {
   const [isInputFocused, setIsInputFocused] = useState<string | null>(null);
   const [showValidationState, setShowValidationState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showServerConfig, setShowServerConfig] = useState(false);
+
+  const handleNetworkError = useCallback((errorMessage: string) => {
+    Alert.alert(
+      'Unable to reach server',
+      `${errorMessage}\n\nEndpoint: ${getCurrentServerUrlSync()}\n\nMake sure your backend is running or update the server address.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Configure Server',
+          onPress: () => setShowServerConfig(true),
+        },
+      ],
+    );
+  }, []);
 
   useEffect(() => {
     if (route.params?.phoneNumber) {
@@ -137,10 +154,18 @@ export const LoginScreen: React.FC = () => {
             ],
           });
       } catch (error) {
-        Alert.alert(
-          'Login failed',
-          error instanceof Error ? error.message : 'Invalid credentials. Please try again.',
-        );
+        const errorMessage =
+          error instanceof Error ? error.message : 'Invalid credentials. Please try again.';
+        const isNetwork =
+          errorMessage.toLowerCase().includes('server') ||
+          errorMessage.toLowerCase().includes('network') ||
+          errorMessage.toLowerCase().includes('timed out');
+
+        if (isNetwork) {
+          handleNetworkError(errorMessage);
+        } else {
+          Alert.alert('Login failed', errorMessage);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -188,14 +213,22 @@ export const LoginScreen: React.FC = () => {
         return;
       }
 
-      Alert.alert(
-        'Unable to continue',
-        error instanceof Error ? error.message : 'Please try again.',
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : 'Please try again.';
+      const isNetwork =
+        errorMessage.toLowerCase().includes('server') ||
+        errorMessage.toLowerCase().includes('network') ||
+        errorMessage.toLowerCase().includes('timed out');
+
+      if (isNetwork) {
+        handleNetworkError(errorMessage);
+      } else {
+        Alert.alert('Unable to continue', errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [isPhoneValid, loginMode, mobileNumber, navigation, password]);
+  }, [handleNetworkError, isPhoneValid, loginMode, mobileNumber, navigation, password]);
 
   const handleGoogleContinue = useCallback(async () => {
     try {
@@ -255,7 +288,15 @@ export const LoginScreen: React.FC = () => {
   }, [mobileNumber, navigation]);
 
   const handleNeedHelp = useCallback(() => {
-    navigation.navigate('Support');
+    Alert.alert(
+      'Need Assistance?',
+      'Choose how we can help:',
+      [
+        { text: 'Support Screen', onPress: () => navigation.navigate('Support') },
+        { text: 'Server Settings (IP)', onPress: () => setShowServerConfig(true) },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
   }, [navigation]);
 
   const phoneInputWrapStyle = useMemo(() => {
@@ -303,13 +344,16 @@ export const LoginScreen: React.FC = () => {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
               {/* Top Hero Banner with Headline & Decorative Graphics */}
-              <View style={styles.heroHeader}>
+              <Pressable
+                onLongPress={() => setShowServerConfig(true)}
+                delayLongPress={600}
+                style={styles.heroHeader}>
                 <AuthHeroGraphic type="login" />
                 <Text style={styles.heroTitle}>
                   Log in to stay on{' '}
                   <Text style={styles.heroTitleHighlight}>top of</Text> your emergency assistance.
                 </Text>
-              </View>
+              </Pressable>
 
               {/* Bottom White Sheet Container */}
               <View style={styles.bottomSheet}>
@@ -509,6 +553,11 @@ export const LoginScreen: React.FC = () => {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </LinearGradient>
+
+      <ServerConfigModal
+        visible={showServerConfig}
+        onClose={() => setShowServerConfig(false)}
+      />
 
       <LoadingOverlay visible={isLoading} />
     </View>

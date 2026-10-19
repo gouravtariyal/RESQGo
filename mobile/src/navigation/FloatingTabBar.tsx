@@ -90,7 +90,7 @@ const TabItem: React.FC<TabItemProps> = ({
   });
   const bubbleBackground = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(37, 99, 235, 0)', 'rgba(37, 99, 235, 0.14)'],
+    outputRange: ['rgba(13, 148, 136, 0)', 'rgba(13, 148, 136, 0.16)'],
   });
 
   return (

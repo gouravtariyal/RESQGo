@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
  * For deployed production backends, set PRODUCTION_API_URL (e.g., https://api.resqgo.com/api).
  */
 const PRODUCTION_API_URL = ''; // e.g. 'https://your-production-backend.com/api'
-const DEV_MACHINE_LAN_IP = '192.168.0.161';
+export const DEV_MACHINE_LAN_IP = '172.16.0.60';
 
 const defaultHost = Platform.select({
   android: '10.0.2.2',

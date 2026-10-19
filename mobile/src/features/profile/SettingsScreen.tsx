@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -12,6 +12,8 @@ import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ServerConfigModal } from '../../components/common/ServerConfigModal';
+import { getCurrentServerUrlSync } from '../../config/serverConfig';
 import type { AppStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { LANGUAGE_OPTIONS, type AppLanguage } from './data';
@@ -35,6 +37,7 @@ export const SettingsScreen: React.FC = () => {
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(width), [width]);
   const { settings, saveSettings } = useProfileStore();
+  const [showServerConfig, setShowServerConfig] = useState(false);
 
   return (
     <LinearGradient
@@ -148,6 +151,23 @@ export const SettingsScreen: React.FC = () => {
               </View>
             </View>
 
+            {/* Backend Server URL */}
+            <View style={styles.settingRow}>
+              <View style={styles.settingTextWrap}>
+                <Text style={styles.settingTitle}>Backend Server</Text>
+                <Text style={styles.settingSubtitle} numberOfLines={1}>
+                  {getCurrentServerUrlSync()}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setShowServerConfig(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Configure server URL"
+                style={styles.statusPill}>
+                <Text style={styles.statusPillText}>Change</Text>
+              </Pressable>
+            </View>
+
             {/* App version */}
             <View style={styles.settingRow}>
               <View style={styles.settingTextWrap}>
@@ -159,6 +179,11 @@ export const SettingsScreen: React.FC = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <ServerConfigModal
+        visible={showServerConfig}
+        onClose={() => setShowServerConfig(false)}
+      />
     </LinearGradient>
   );
 };

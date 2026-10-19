@@ -19,12 +19,13 @@ export const palette = {
   teal600: '#0D9488',
   teal700: '#0F766E',
   teal800: '#115E59',
+  teal100: '#CCFBF1',
   teal50: '#F0FDFA',
   transparent: 'transparent',
 } as const;
 
 export const colors = {
-  primary: palette.blue600,
+  primary: palette.teal600,
   secondary: palette.slate900,
 
   background: palette.slate50,

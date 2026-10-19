@@ -20,6 +20,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { LoadingOverlay } from '../../../components/loaders/LoadingOverlay';
 import { AuthHeroGraphic } from '../../../components/common/AuthHeroGraphic';
+import { ServerConfigModal } from '../../../components/common/ServerConfigModal';
+import { getCurrentServerUrlSync } from '../../../config/serverConfig';
 import type {
   AuthStackParamList,
   RootStackParamList,
@@ -73,6 +75,7 @@ export const RegisterScreen: React.FC = () => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showServerConfig, setShowServerConfig] = useState(false);
 
   const isNameValid = fullName.trim().length >= 2;
   const isPhoneValid = phoneNumber.length === MAX_PHONE_DIGITS;
@@ -196,6 +199,22 @@ export const RegisterScreen: React.FC = () => {
             {
               text: 'Cancel',
               style: 'cancel',
+            },
+          ],
+        );
+      } else if (
+        message.toLowerCase().includes('server') ||
+        message.toLowerCase().includes('network') ||
+        message.toLowerCase().includes('timed out')
+      ) {
+        Alert.alert(
+          'Unable to reach server',
+          `${message}\n\nEndpoint: ${getCurrentServerUrlSync()}\n\nMake sure your backend is running or update the server address.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Configure Server',
+              onPress: () => setShowServerConfig(true),
             },
           ],
         );
@@ -631,6 +650,11 @@ export const RegisterScreen: React.FC = () => {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </LinearGradient>
+
+      <ServerConfigModal
+        visible={showServerConfig}
+        onClose={() => setShowServerConfig(false)}
+      />
 
       <LoadingOverlay visible={isLoading} />
     </View>

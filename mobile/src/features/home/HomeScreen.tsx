@@ -1,13 +1,25 @@
 import React, { memo, useCallback, useMemo } from 'react';
-import { FlatList, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import {
+  BackHandler,
+  FlatList,
+  Platform,
+  Pressable,
+  StatusBar,
+  Text,
+  ToastAndroid,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import type { AppStackParamList, BottomTabParamList } from '../../navigation/types';
+import { useProfileStore } from '../profile/profileStore';
 import {
   HERO_GRADIENT_COLORS,
   HERO_GRADIENT_END,
@@ -48,6 +60,44 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeNavigationProp>();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(width), [width]);
+  const { profile } = useProfileStore();
+
+  const userDisplayName = useMemo(() => {
+    if (profile.name && profile.name.trim().length > 0) {
+      return profile.name.trim();
+    }
+    return 'Gourav';
+  }, [profile.name]);
+
+  // Standard Android UX: double tap back button within 2 seconds to exit the app
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') {
+        return;
+      }
+
+      let lastBackPress = 0;
+
+      const onBackPress = () => {
+        const now = Date.now();
+        if (now - lastBackPress < 2000) {
+          BackHandler.exitApp();
+          return true;
+        }
+
+        lastBackPress = now;
+        ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, []),
+  );
 
   // These handlers are placeholders for future feature navigation wiring.
   const handleGetHelp = useCallback(() => {
@@ -78,6 +128,7 @@ export const HomeScreen: React.FC = () => {
   const renderQuickAction = useCallback(
     ({ item }: { item: QuickAction }) => (
       <QuickActionCard
+        id={item.id}
         icon={item.icon}
         title={item.title}
         onPress={() => handleQuickActionPress(item.id)}
@@ -93,7 +144,7 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.header}>
           <View style={styles.headerTextWrap}>
             <Text style={styles.greeting}>Good Morning</Text>
-            <Text style={styles.userName}>Gourav</Text>
+            <Text style={styles.userName}>{userDisplayName}</Text>
 
             <View style={styles.locationRow}>
               <Text style={styles.locationIcon}>📍</Text>
@@ -106,7 +157,8 @@ export const HomeScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel="Notifications"
             style={styles.notificationButton}>
-            <Text style={styles.notificationIcon}>🔔</Text>
+            <Ionicons name="notifications" size={21} color="#0D9488" />
+            <View style={styles.notificationBadgeDot} />
           </Pressable>
         </View>
 
@@ -117,9 +169,12 @@ export const HomeScreen: React.FC = () => {
             start={HERO_GRADIENT_START}
             end={HERO_GRADIENT_END}
             style={styles.heroGradient}>
+            {/* Subtle floating glow effect */}
+            <View style={styles.heroDecorCircle} pointerEvents="none" />
+
             <View>
               <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>RESQGo AI Assistant</Text>
+                <Text style={styles.heroBadgeText}>⚡ RESQGo AI Assistant</Text>
               </View>
 
               <Text style={styles.heroTitle}>Need roadside help?</Text>
@@ -133,7 +188,7 @@ export const HomeScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Get Help"
               style={styles.heroButton}>
-              <Text style={styles.heroButtonText}>Get Help</Text>
+              <Text style={styles.heroButtonText}>Get Help  →</Text>
             </Pressable>
           </LinearGradient>
         </View>
@@ -161,11 +216,13 @@ export const HomeScreen: React.FC = () => {
       styles.locationIcon,
       styles.locationRow,
       styles.locationText,
+      styles.notificationBadgeDot,
       styles.notificationButton,
-      styles.notificationIcon,
+      styles.heroDecorCircle,
       styles.section,
       styles.sectionTitle,
       styles.userName,
+      userDisplayName,
     ],
   );
 
@@ -242,6 +299,7 @@ export const HomeScreen: React.FC = () => {
       start={SCREEN_GRADIENT_START}
       end={SCREEN_GRADIENT_END}
       style={styles.gradient}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F0FDFA" translucent={false} />
       {/* Bottom safe area is handled by the floating Bottom Tab Navigator. */}
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <FlatList
@@ -261,6 +319,7 @@ export const HomeScreen: React.FC = () => {
 };
 
 type QuickActionCardProps = {
+  id: string;
   icon: string;
   title: string;
   onPress: () => void;
@@ -283,17 +342,34 @@ const SurfaceCard: React.FC<React.PropsWithChildren> = ({ children }) => {
  * ---------------
  * Reusable action tile used inside the quick action grid.
  */
-const QuickActionCard: React.FC<QuickActionCardProps> = memo(({ icon, title, onPress }) => {
+const QuickActionCard: React.FC<QuickActionCardProps> = memo(({ id, icon, title, onPress }) => {
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(width), [width]);
+
+  const isSOS = id === 'emergency-sos';
+
+  const iconWrapStyle = useMemo(() => {
+    switch (id) {
+      case 'emergency-sos':
+        return styles.actionIconWrapSOS;
+      case 'fuel-delivery':
+        return styles.actionIconWrapFuel;
+      case 'ev-charging':
+        return styles.actionIconWrapEv;
+      case 'flat-tyre-help':
+        return styles.actionIconWrapTyre;
+      default:
+        return undefined;
+    }
+  }, [id, styles]);
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={styles.actionCard}>
-      <View style={styles.actionIconWrap}>
+      style={[styles.actionCard, isSOS && styles.actionCardSOS]}>
+      <View style={[styles.actionIconWrap, iconWrapStyle]}>
         <Text style={styles.actionIcon}>{icon}</Text>
       </View>
 

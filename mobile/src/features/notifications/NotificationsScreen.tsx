@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '../../components/common/BackButton';
 import type { AppStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import {
@@ -89,13 +90,7 @@ export const NotificationsScreen: React.FC = () => {
     () => (
       <View>
         <View style={styles.headerRow}>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={styles.backButton}>
-            <Text style={styles.backButtonText}>{'<'}</Text>
-          </Pressable>
+          <BackButton />
           <Text style={styles.headerTitle} accessibilityRole="header">
             Notifications
           </Text>
